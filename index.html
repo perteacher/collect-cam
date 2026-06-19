@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <meta name="theme-color" content="#0e0f13" />
-<title>채집 카메라</title>
+<title>채집 도감</title>
 <style>
   :root {
     --bg: #0e0f13;
@@ -244,17 +244,18 @@
   #invTitle { font-size: 17px; font-weight: 800; letter-spacing: 0.3px; }
   #invTitle small { color: var(--muted); font-weight: 600; font-size: 13px; margin-left: 6px; }
   #invHeader .btns { display: flex; gap: 10px; }
-  #invClearBtn, #invCloseBtn {
+  #invHeader .btns button {
     border: 1px solid var(--line);
     border-radius: 12px;
-    padding: 10px 16px;
+    padding: 10px 14px;
     font-size: 14px;
     font-weight: 700;
     cursor: pointer;
+    background: var(--panel-2);
+    color: var(--muted);
   }
-  #invClearBtn { background: var(--panel-2); color: var(--muted); }
-  #invClearBtn:active { background: #262a35; }
-  #invCloseBtn { background: var(--accent); color: #06210f; border-color: transparent; }
+  #invHeader .btns button:active { background: #262a35; }
+  #invCloseBtn { background: var(--accent) !important; color: #06210f !important; border-color: transparent !important; }
 
   #invViewport {
     position: relative;
@@ -262,7 +263,7 @@
     min-height: 0;
     overflow: hidden;
   }
-  #invCanvas { position: absolute; inset: 0; display: block; }
+  #invCanvas { position: absolute; inset: 0; display: block; touch-action: none; }
 
   /* fallback static grid */
   #invGrid {
@@ -279,18 +280,25 @@
   }
   #invGrid.show { display: flex; }
   .gridItem {
-    width: 84px;
-    height: 84px;
+    width: 92px;
+    height: 110px;
     border-radius: 12px;
     background: var(--panel-2);
     border: 1px solid var(--line);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     overflow: hidden;
     flex: 0 0 auto;
+    cursor: pointer;
+    padding: 4px;
   }
-  .gridItem img { max-width: 90%; max-height: 90%; object-fit: contain; }
+  .gridItem img { max-width: 90%; max-height: 70%; object-fit: contain; }
+  .gridItem .gName {
+    font-size: 11px; color: var(--muted); margin-top: 4px;
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
 
   #invEmpty {
     position: absolute;
@@ -308,7 +316,7 @@
   #overlay {
     position: fixed;
     inset: 0;
-    z-index: 50;
+    z-index: 90;
     background: rgba(8,9,12,0.92);
     display: none;
     align-items: center;
@@ -338,9 +346,214 @@
   }
   #overlay .emoji { font-size: 40px; margin-bottom: 10px; }
 
+  /* ===== Generic full-screen sheet (editor / info / detail) ===== */
+  .sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: var(--bg);
+    display: none;
+    flex-direction: column;
+  }
+  .sheet.show { display: flex; }
+  .sheetHead {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .sheetHead h2 { margin: 0; font-size: 16px; font-weight: 800; }
+  .sheetBody {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sheetFoot {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 10px;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--line);
+    background: var(--panel);
+  }
+  .btn {
+    flex: 1 1 0;
+    min-height: 54px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .btn:active { background: #262a35; }
+  .btn.primary { background: var(--accent); color: #06210f; border-color: transparent; }
+  .btn.primary:active { filter: brightness(0.92); }
+  .btn.danger { background: #2a1416; color: var(--danger); border-color: #4a2226; }
+  .btn.ghost { background: transparent; }
+  .btn.small { min-height: 44px; font-size: 14px; flex: 0 0 auto; padding: 0 16px; }
+  .btn[disabled] { opacity: 0.5; cursor: default; }
+
+  /* ===== Mask editor ===== */
+  #editStageWrap {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background:
+      repeating-conic-gradient(#1a1d25 0% 25%, #23262f 0% 50%) 50% / 22px 22px;
+    touch-action: none;
+  }
+  #editCanvas {
+    position: absolute;
+    left: 0; top: 0;
+    display: block;
+    touch-action: none;
+  }
+  #editTools {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--line);
+    background: var(--panel);
+  }
+  #editTools .row { display: flex; gap: 10px; align-items: center; }
+  #editTools .toolBtn {
+    flex: 1 1 0;
+    min-height: 50px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  #editTools .toolBtn.active { background: var(--accent); color: #06210f; border-color: transparent; }
+  #editTools .toolBtn.active.erase { background: #ff9aa2; color: #2a0d10; }
+  #brushRow { gap: 12px; }
+  #brushRow label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+  #brushSize { flex: 1 1 auto; height: 36px; }
+  #editHint { font-size: 12px; color: var(--muted); text-align: center; }
+
+  /* ===== Form (info input / detail edit) ===== */
+  .form { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .form .preview {
+    align-self: center;
+    width: 180px; height: 180px;
+    border-radius: 16px;
+    background:
+      repeating-conic-gradient(#1a1d25 0% 25%, #23262f 0% 50%) 50% / 18px 18px;
+    border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .form .preview img { max-width: 92%; max-height: 92%; object-fit: contain; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 13px; font-weight: 700; color: var(--muted); }
+  .field label .req { color: var(--accent); margin-left: 4px; }
+  .field input, .field textarea {
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    color: var(--text);
+    font-size: 16px;
+    padding: 13px 14px;
+    font-family: inherit;
+  }
+  .field input:focus, .field textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .field textarea { min-height: 80px; resize: vertical; }
+  .field .err { font-size: 12px; color: var(--danger); display: none; }
+  .field.invalid .err { display: block; }
+  .field.invalid input { border-color: var(--danger); }
+  .locRow { display: flex; gap: 8px; }
+  .locRow input { flex: 1 1 auto; }
+  .locRow button {
+    flex: 0 0 auto;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    color: var(--text);
+    font-size: 13px; font-weight: 700;
+    padding: 0 14px;
+    cursor: pointer;
+  }
+  .detailMeta { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .detailMeta .mrow { display: flex; gap: 10px; font-size: 14px; }
+  .detailMeta .mrow .k { color: var(--muted); width: 64px; flex: 0 0 auto; }
+  .detailMeta .mrow .v { color: var(--text); white-space: pre-wrap; word-break: break-word; }
+
+  /* small loader toast */
+  #loader {
+    position: fixed;
+    left: 50%;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 120px);
+    transform: translateX(-50%);
+    z-index: 80;
+    background: rgba(20,22,28,0.92);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    display: none;
+    align-items: center;
+    gap: 10px;
+  }
+  #loader.show { display: flex; }
+  #loader #loaderSkip {
+    border: 0; border-radius: 999px; padding: 6px 12px;
+    background: var(--accent); color: #0b0b0c;
+    font-weight: 800; font-size: 12px; cursor: pointer; display: none;
+  }
+  #loader .spin {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.25);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* toast (quota / errors) */
+  #toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
+    transform: translateX(-50%) translateY(20px);
+    z-index: 95;
+    max-width: 88vw;
+    background: rgba(30,16,18,0.96);
+    border: 1px solid #4a2226;
+    color: #ffd9dc;
+    border-radius: 14px;
+    padding: 12px 16px;
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 200ms ease, transform 200ms ease;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
   @media (prefers-reduced-motion: reduce) {
     #flash.fire { animation-duration: 120ms; }
     #invBadge.bump { animation: none; }
+    #loader .spin { animation-duration: 1.6s; }
   }
 </style>
 </head>
@@ -362,19 +575,20 @@
   <div id="controls">
     <div id="spacerLeft"></div>
     <button id="captureBtn">채집</button>
-    <button id="invBtn" title="채집물">
-      채집물
+    <button id="invBtn" title="채집 도감">
+      도감
       <span id="invBadge">0</span>
     </button>
   </div>
 </div>
 
-<!-- 채집물(inventory) full overlay -->
+<!-- 채집 도감(inventory) full overlay -->
 <div id="inventory">
   <div id="invHeader">
-    <div id="invTitle">채집물 <small id="invCountLabel">0개</small></div>
+    <div id="invTitle">채집 도감 <small id="invCountLabel">0개</small></div>
     <div class="btns">
-      <button id="invClearBtn" title="비우기">비우기</button>
+      <button id="invExportBtn" title="내보내기">내보내기</button>
+      <button id="invImportBtn" title="가져오기">가져오기</button>
       <button id="invCloseBtn" title="닫기">닫기</button>
     </div>
   </div>
@@ -382,6 +596,94 @@
     <canvas id="invCanvas"></canvas>
     <div id="invGrid"></div>
     <div id="invEmpty">아직 채집한 것이 없어요</div>
+  </div>
+</div>
+
+<!-- 누끼 편집 화면 -->
+<div id="editor" class="sheet">
+  <div class="sheetHead">
+    <h2>누끼 다듬기</h2>
+    <button id="editUndoBtn" class="btn small ghost">되돌리기</button>
+  </div>
+  <div class="sheetBody" style="overflow:hidden; display:flex; flex-direction:column;">
+    <div id="editStageWrap">
+      <canvas id="editCanvas"></canvas>
+    </div>
+  </div>
+  <div id="editTools">
+    <div class="row">
+      <button id="toolErase" class="toolBtn erase active">지우기</button>
+      <button id="toolRestore" class="toolBtn">복원</button>
+    </div>
+    <div class="row" id="brushRow">
+      <label>붓 크기</label>
+      <input id="brushSize" type="range" min="6" max="80" value="26" />
+    </div>
+    <div id="editHint">손가락으로 칠하세요 · 두 손가락으로 확대/이동</div>
+  </div>
+  <div class="sheetFoot">
+    <button id="editCancelBtn" class="btn ghost">취소</button>
+    <button id="editDoneBtn" class="btn primary">완료</button>
+  </div>
+</div>
+
+<!-- 정보 입력 화면 -->
+<div id="infoSheet" class="sheet">
+  <div class="sheetHead">
+    <h2 id="infoTitle">정보 입력</h2>
+  </div>
+  <div class="sheetBody">
+    <div class="form">
+      <div class="preview"><img id="infoPreview" alt="" /></div>
+      <div class="field" id="fName">
+        <label>이름<span class="req">*필수</span></label>
+        <input id="inName" type="text" inputmode="text" placeholder="예: 민들레, 무당벌레" maxlength="40" />
+        <div class="err">이름을 적어 주세요.</div>
+      </div>
+      <div class="field">
+        <label>채집 장소</label>
+        <div class="locRow">
+          <input id="inPlace" type="text" placeholder="예: 학교 화단" maxlength="80" />
+          <button id="geoBtn" type="button">현재 위치</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>설명 / 메모</label>
+        <textarea id="inNote" placeholder="관찰한 점을 적어 보세요" maxlength="500"></textarea>
+      </div>
+      <div class="field">
+        <label>채집 날짜</label>
+        <input id="inDate" type="date" />
+      </div>
+    </div>
+  </div>
+  <div class="sheetFoot">
+    <button id="infoCancelBtn" class="btn ghost">취소</button>
+    <button id="infoSaveBtn" class="btn primary">저장</button>
+  </div>
+</div>
+
+<!-- 상세 화면 -->
+<div id="detailSheet" class="sheet">
+  <div class="sheetHead">
+    <h2>채집물</h2>
+    <button id="detailCloseBtn" class="btn small ghost">닫기</button>
+  </div>
+  <div class="sheetBody">
+    <div class="form" style="gap:10px;">
+      <div class="preview"><img id="detailImg" alt="" /></div>
+    </div>
+    <div class="detailMeta" id="detailView">
+      <div class="mrow"><span class="k">이름</span><span class="v" id="dvName"></span></div>
+      <div class="mrow"><span class="k">장소</span><span class="v" id="dvPlace"></span></div>
+      <div class="mrow"><span class="k">설명</span><span class="v" id="dvNote"></span></div>
+      <div class="mrow"><span class="k">날짜</span><span class="v" id="dvDate"></span></div>
+    </div>
+  </div>
+  <div class="sheetFoot" style="flex-wrap:wrap;">
+    <button id="detailEditMaskBtn" class="btn">누끼 다시 다듬기</button>
+    <button id="detailEditInfoBtn" class="btn">정보 수정</button>
+    <button id="detailDeleteBtn" class="btn danger">삭제</button>
   </div>
 </div>
 
@@ -394,33 +696,41 @@
   </div>
 </div>
 
+<div id="loader"><span class="spin"></span><span id="loaderMsg">배경 지우는 중…</span><button id="loaderSkip" type="button">빠르게 건너뛰기</button></div>
+<div id="toast"></div>
+<input id="importFile" type="file" accept="application/json,.json" style="display:none" />
+
 <!-- Matter.js (physics) — pinned version, CDN. Fallback to static grid if blocked. -->
 <script src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js"></script>
 <script>
 "use strict";
 
 /* =========================================================
-   채집 카메라 — 단일 파일 바닐라 웹앱
-   배경 제거: 다중-에지 샘플 + LAB 거리 플러드필 (ML 없음, 오프라인 즉시)
-   채집물: Matter.js 중력 물리 더미(겹침 없는 충돌 적층), 폴백=정적 그리드
+   학생용 동식물 채집 도감 — 단일 파일 바닐라 웹앱
+   - 채집(카메라) → 자동 누끼(@imgly, 실패시 플러드필 폴백) → 수동 누끼 편집 → 정보 입력 → 저장
+   - 도감(채집물): Matter.js 중력 물리 + 드래그(MouseConstraint), 탭 → 상세, 폴백=정적 그리드
+   - localStorage 자동 저장, JSON 내보내기/가져오기
    ========================================================= */
 
-// ---- 튜닝 상수 (배경 제거) ----
-const MAX_DIM = 640;        // 처리 캔버스 긴 변 길이(px). 성능/품질 균형.
-// TOLERANCE: LAB(ΔE 유사) 스케일로 재조정. RGB의 36과 달리 LAB는 ΔE 단위라 작게.
-// 일반 단색 배경 기준 ~14 전후가 적당(클수록 더 많이 지움). LAB용으로 14 선택.
+// ---- 튜닝 상수 (배경 제거: 폴백 플러드필) ----
+const MAX_DIM = 640;
 const TOLERANCE = 14;
-const EDGE_SAMPLES = 12;        // 각 변에서 뽑는 배경 색 샘플 개수(코너 포함). 배경 색 모델 크기.
-const FEATHER_PX = 1;           // 알파 경계 페더(블러) 반경(px). 1~2 권장.
-const MIN_BLOB_PX = 24;         // 이보다 작은 전경 연결성분(speck)은 제거.
-const HOLE_MAX_PX = Infinity;   // 전경에 완전히 둘러싸인 배경 구멍은 전부 메움(내부 안 뚫리게).
-const MIN_OBJECT_RATIO = 0.004; // 남은 객체가 이 비율보다 작으면 "검출 실패"로 간주
+const EDGE_SAMPLES = 12;
+const FEATHER_PX = 1;
+const MIN_BLOB_PX = 24;
+const HOLE_MAX_PX = Infinity;
+const MIN_OBJECT_RATIO = 0.004;
 
 // ---- 튜닝 상수 (물리) ----
-const PHYS_MAX_DIM = 110;   // 채집물 한 개의 화면상 최대 변(px). 큰 컷아웃이 화면 장악 방지.
-const PHYS_MIN_DIM = 40;    // 너무 작은 컷아웃도 최소 이 정도로 키워 충돌 안정화.
-const DROP_STAGGER_MS = 130;// 한 개씩 떨어뜨리는 간격(캐스케이드).
-const WALL_THICK = 80;      // 정적 벽/바닥 두께(px).
+const PHYS_MAX_DIM = 110;
+const PHYS_MIN_DIM = 40;
+const DROP_STAGGER_MS = 130;
+const WALL_THICK = 80;
+
+// ---- 저장 ----
+const LS_KEY = "collect-cam.v2";
+const JPEG_Q = 0.82;        // original 스냅샷 저장 압축률
+const MASK_KEY_PREFIX = "m"; // (사용 안함, 예약)
 
 // ---- DOM ----
 const video      = document.getElementById("video");
@@ -441,9 +751,52 @@ const invViewport  = document.getElementById("invViewport");
 const invCanvas    = document.getElementById("invCanvas");
 const invGrid      = document.getElementById("invGrid");
 const invEmpty     = document.getElementById("invEmpty");
-const invClearBtn  = document.getElementById("invClearBtn");
 const invCloseBtn  = document.getElementById("invCloseBtn");
+const invExportBtn = document.getElementById("invExportBtn");
+const invImportBtn = document.getElementById("invImportBtn");
 const invCountLabel= document.getElementById("invCountLabel");
+const importFile   = document.getElementById("importFile");
+
+const loaderEl   = document.getElementById("loader");
+const loaderMsg  = document.getElementById("loaderMsg");
+const loaderSkip = document.getElementById("loaderSkip");
+const toastEl    = document.getElementById("toast");
+
+// editor DOM
+const editorEl     = document.getElementById("editor");
+const editStageWrap= document.getElementById("editStageWrap");
+const editCanvas   = document.getElementById("editCanvas");
+const toolEraseBtn = document.getElementById("toolErase");
+const toolRestoreBtn = document.getElementById("toolRestore");
+const brushSizeEl  = document.getElementById("brushSize");
+const editUndoBtn  = document.getElementById("editUndoBtn");
+const editCancelBtn= document.getElementById("editCancelBtn");
+const editDoneBtn  = document.getElementById("editDoneBtn");
+
+// info DOM
+const infoSheet    = document.getElementById("infoSheet");
+const infoTitle    = document.getElementById("infoTitle");
+const infoPreview  = document.getElementById("infoPreview");
+const inName       = document.getElementById("inName");
+const inPlace      = document.getElementById("inPlace");
+const inNote       = document.getElementById("inNote");
+const inDate       = document.getElementById("inDate");
+const fName        = document.getElementById("fName");
+const geoBtn       = document.getElementById("geoBtn");
+const infoCancelBtn= document.getElementById("infoCancelBtn");
+const infoSaveBtn  = document.getElementById("infoSaveBtn");
+
+// detail DOM
+const detailSheet  = document.getElementById("detailSheet");
+const detailImg    = document.getElementById("detailImg");
+const dvName       = document.getElementById("dvName");
+const dvPlace      = document.getElementById("dvPlace");
+const dvNote       = document.getElementById("dvNote");
+const dvDate       = document.getElementById("dvDate");
+const detailCloseBtn   = document.getElementById("detailCloseBtn");
+const detailEditMaskBtn= document.getElementById("detailEditMaskBtn");
+const detailEditInfoBtn= document.getElementById("detailEditInfoBtn");
+const detailDeleteBtn  = document.getElementById("detailDeleteBtn");
 
 const prefersReducedMotion =
   window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -452,8 +805,29 @@ let stream = null;
 let count = 0;
 let busy = false;
 
-// 채집물 저장소(메모리): { dataURL, w, h }  (w,h = 컷아웃 bbox 원본 픽셀 크기)
+/* 채집물 저장소(메모리/영구):
+   각 item = { id, image, original, mask, name, location, note, date, createdAt }
+   image    = 투명 PNG dataURL(표시용 컷아웃, bbox 크롭)
+   original = 스냅샷 dataURL(JPEG, ≤MAX_DIM) — 재편집용
+   mask     = 알파 마스크 dataURL(PNG, 회색조 알파, original과 동일 크기) — 재편집용
+*/
 const store = [];
+let nextId = 1;
+
+// ---- 토스트/로더 ----
+let toastTimer = null;
+function toast(msg, ms) {
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove("show"), ms || 3200);
+}
+function showLoader(msg, showSkip) {
+  loaderMsg.textContent = msg || "처리 중…";
+  loaderSkip.style.display = showSkip ? "inline-block" : "none";
+  loaderEl.classList.add("show");
+}
+function hideLoader() { loaderEl.classList.remove("show"); loaderSkip.style.display = "none"; loaderSkip.onclick = null; }
 
 // ---- 오버레이 헬퍼 ----
 function showOverlay(title, msg, btnLabel, onClick) {
@@ -478,7 +852,6 @@ async function startCamera() {
       "새로고침");
     return;
   }
-  // 보안 컨텍스트 체크 (https 또는 localhost)
   if (!window.isSecureContext) {
     showOverlay("https가 필요해요",
       "카메라는 보안 연결(https)에서만 작동해요.<br>GitHub Pages 주소(https://…) 또는 localhost로 열어 주세요.",
@@ -498,7 +871,7 @@ async function startCamera() {
       }
     });
     video.srcObject = stream;
-    await video.play().catch(() => {}); // 일부 브라우저는 사용자 제스처 필요 → 무시
+    await video.play().catch(() => {});
 
     await new Promise((res) => {
       if (video.readyState >= 2 && video.videoWidth) return res();
@@ -529,8 +902,7 @@ function handleCameraError(err) {
 }
 
 /* =========================================================
-   리티클 → 비디오 소스 크롭 사각형 계산
-   object-fit: cover 를 고려해 화면 좌표를 비디오 원본 픽셀로 역변환.
+   리티클 → 비디오 소스 크롭 사각형 계산 (object-fit: cover 역변환)
    ========================================================= */
 function getSourceCropRect() {
   const vw = video.videoWidth;
@@ -541,25 +913,21 @@ function getSourceCropRect() {
   const dispW = stageRect.width;
   const dispH = stageRect.height;
 
-  // cover: 비디오를 꽉 채우도록 스케일 → 더 큰 비율 사용
   const scale = Math.max(dispW / vw, dispH / vh);
-  const drawnW = vw * scale;       // 화면상 비디오 실제 그려진 크기
+  const drawnW = vw * scale;
   const drawnH = vh * scale;
-  const offsetX = (dispW - drawnW) / 2; // cover라 보통 음수 (잘려나간 부분)
+  const offsetX = (dispW - drawnW) / 2;
   const offsetY = (dispH - drawnH) / 2;
 
-  // 리티클의 화면 좌표 (stage 기준)
   const r = reticleEl.getBoundingClientRect();
   const rx = r.left - stageRect.left;
   const ry = r.top  - stageRect.top;
 
-  // 화면 좌표 → 비디오 원본 픽셀 좌표
   let sx = (rx - offsetX) / scale;
   let sy = (ry - offsetY) / scale;
   let sWidth  = r.width  / scale;
   let sHeight = r.height / scale;
 
-  // 경계 클램프
   sx = Math.max(0, Math.min(sx, vw - 1));
   sy = Math.max(0, Math.min(sy, vh - 1));
   sWidth  = Math.max(1, Math.min(sWidth,  vw - sx));
@@ -576,14 +944,11 @@ function srgbToLinear(c) {
   return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
 }
 function labF(t) {
-  // CIE f()
   return t > 0.008856451679035631 ? Math.cbrt(t) : (7.787037037037035 * t + 16 / 116);
 }
-// D65 white
 const LAB_XN = 0.95047, LAB_YN = 1.0, LAB_ZN = 1.08883;
 function rgbToLab(r, g, b) {
   const rl = srgbToLinear(r), gl = srgbToLinear(g), bl = srgbToLinear(b);
-  // linear sRGB → XYZ (D65)
   const X = rl * 0.4124564 + gl * 0.3575761 + bl * 0.1804375;
   const Y = rl * 0.2126729 + gl * 0.7151522 + bl * 0.0721750;
   const Z = rl * 0.0193339 + gl * 0.1191920 + bl * 0.9503041;
@@ -597,14 +962,11 @@ function rgbToLab(r, g, b) {
 }
 
 /* =========================================================
-   배경 제거 파이프라인 (재귀 없음 — 모두 명시적 스택/큐)
-     1) 다중 에지 샘플로 배경 색 모델(LAB) 구성
-     2) 에지에서 안쪽으로 LAB 거리 플러드필 → 배경 마스크
-     3) 후처리: 구멍 메움 → 작은 전경 speck 제거 → 알파 페더
-     4) 전경 bbox 크롭 → 투명 PNG
-   반환: { dataURL, width, height, cxRatio, cyRatio } 또는 null
+   폴백 배경 제거 (플러드필) — 알파 마스크(Uint8ClampedArray, N) 반환
+   재귀 없음. 실패시 null.
+   반환: { alpha: Uint8Array(N), w, h } 또는 null
    ========================================================= */
-function removeBackground(srcCanvas) {
+function heuristicMask(srcCanvas) {
   const w = srcCanvas.width;
   const h = srcCanvas.height;
   const ctx = srcCanvas.getContext("2d", { willReadFrequently: true });
@@ -612,7 +974,6 @@ function removeBackground(srcCanvas) {
   const data = imgData.data;
   const N = w * h;
 
-  // --- LAB 룩업: 픽셀별 LAB 미리 계산(성능) ---
   const labL = new Float32Array(N);
   const labA = new Float32Array(N);
   const labB = new Float32Array(N);
@@ -622,28 +983,26 @@ function removeBackground(srcCanvas) {
     labL[p] = lab[0]; labA[p] = lab[1]; labB[p] = lab[2];
   }
 
-  // --- 1) 다중 에지 샘플 → 배경 색 모델 ---
   const seedPts = [];
   const samp = Math.max(2, EDGE_SAMPLES);
   for (let s = 0; s < samp; s++) {
     const fx = Math.round((w - 1) * (s / (samp - 1)));
     const fy = Math.round((h - 1) * (s / (samp - 1)));
-    seedPts.push(fy * w + 0);          // 왼쪽 변
-    seedPts.push(fy * w + (w - 1));    // 오른쪽 변
-    seedPts.push(0 * w + fx);          // 위쪽 변
-    seedPts.push((h - 1) * w + fx);    // 아래쪽 변
+    seedPts.push(fy * w + 0);
+    seedPts.push(fy * w + (w - 1));
+    seedPts.push(0 * w + fx);
+    seedPts.push((h - 1) * w + fx);
   }
-  // 배경 LAB 모델(중복 제거는 비용 대비 의미 적어 그대로 둠)
   const bgL = [], bgA = [], bgB = [];
   for (const sp0 of seedPts) {
     bgL.push(labL[sp0]); bgA.push(labA[sp0]); bgB.push(labB[sp0]);
   }
-  const M = bgL.length;
-  const tol2 = TOLERANCE * TOLERANCE; // LAB ΔE^2 임계
+  const Mn = bgL.length;
+  const tol2 = TOLERANCE * TOLERANCE;
 
   function isBgColor(p) {
     const Lp = labL[p], Ap = labA[p], Bp = labB[p];
-    for (let k = 0; k < M; k++) {
+    for (let k = 0; k < Mn; k++) {
       const dL = Lp - bgL[k];
       const dA = Ap - bgA[k];
       const dB = Bp - bgB[k];
@@ -652,11 +1011,9 @@ function removeBackground(srcCanvas) {
     return false;
   }
 
-  // --- 2) 에지에서 안쪽으로 플러드필 (명시적 스택) ---
-  const bg = new Uint8Array(N); // 1 = 배경
+  const bg = new Uint8Array(N);
   const stack = new Int32Array(N);
   let sp = 0;
-  // 시드: 모든 에지 픽셀 중 배경색인 것
   function trySeed(p) {
     if (!bg[p] && isBgColor(p)) { bg[p] = 1; stack[sp++] = p; }
   }
@@ -673,12 +1030,10 @@ function removeBackground(srcCanvas) {
     if (y < h - 1) { const q = p + w; if (!bg[q] && isBgColor(q)) { bg[q] = 1; stack[sp++] = q; } }
   }
 
-  // --- 3a) 구멍 메움: 에지에 연결된 배경만 "진짜 배경".
-  //         배경으로 분류됐지만 에지에서 도달 불가한 영역 = 내부 구멍 → 전경 복원.
-  //   reachable[p]=1 : 외부 배경에서 4방향으로 도달 가능한 배경.
+  // 구멍 메움
   const reachable = new Uint8Array(N);
   let qp = 0;
-  const queue = stack; // 재사용
+  const queue = stack;
   for (let x = 0; x < w; x++) {
     let p = x;                 if (bg[p] && !reachable[p]) { reachable[p] = 1; queue[qp++] = p; }
     p = (h - 1) * w + x;       if (bg[p] && !reachable[p]) { reachable[p] = 1; queue[qp++] = p; }
@@ -696,17 +1051,15 @@ function removeBackground(srcCanvas) {
     if (y > 0)     { const q = p - w; if (bg[q] && !reachable[q]) { reachable[q] = 1; queue[qp++] = q; } }
     if (y < h - 1) { const q = p + w; if (bg[q] && !reachable[q]) { reachable[q] = 1; queue[qp++] = q; } }
   }
-  // 도달 불가한 배경(=구멍)은 전경으로 되돌림
   for (let p = 0; p < N; p++) {
     if (bg[p] && !reachable[p]) bg[p] = 0;
   }
 
-  // --- 3b) 작은 전경 speck 제거: 전경 연결성분 라벨링(명시적 큐), 크기<MIN_BLOB_PX면 배경화 ---
+  // 작은 speck 제거
   const seen = new Uint8Array(N);
   const comp = new Int32Array(N);
   for (let start = 0; start < N; start++) {
     if (bg[start] || seen[start]) continue;
-    // BFS
     let cp = 0;
     comp[cp++] = start;
     seen[start] = 1;
@@ -721,67 +1074,32 @@ function removeBackground(srcCanvas) {
       if (y < h - 1) { const q = p + w; if (!bg[q] && !seen[q]) { seen[q] = 1; comp[cp++] = q; } }
     }
     if (cp < MIN_BLOB_PX) {
-      for (let k = 0; k < cp; k++) bg[comp[k]] = 1; // speck → 배경
+      for (let k = 0; k < cp; k++) bg[comp[k]] = 1;
     }
   }
 
-  // --- 알파 1차 설정: 배경=0, 전경=255 ---
+  // 알파 빌드 (전경=255)
+  const alpha = new Uint8Array(N);
+  let kept = 0;
   for (let p = 0; p < N; p++) {
-    data[p * 4 + 3] = bg[p] ? 0 : 255;
+    if (!bg[p]) { alpha[p] = 255; kept++; }
   }
+  if (kept < N * MIN_OBJECT_RATIO) return null;
 
-  // --- bbox 계산 + 전경 픽셀 수 ---
-  let minX = w, minY = h, maxX = -1, maxY = -1, kept = 0;
-  for (let p = 0; p < N; p++) {
-    if (!bg[p]) {
-      kept++;
-      const x = p % w;
-      const y = (p - x) / w;
-      if (x < minX) minX = x;
-      if (x > maxX) maxX = x;
-      if (y < minY) minY = y;
-      if (y > maxY) maxY = y;
-    }
-  }
-  // 검출 실패 가드
-  if (maxX < 0 || kept < N * MIN_OBJECT_RATIO) {
-    return null;
-  }
+  // 페더 (알파만 박스블러)
+  if (FEATHER_PX > 0) featherAlphaArray(alpha, w, h, FEATHER_PX);
 
-  // --- 3c) 페더: 마스크 경계의 알파를 박스블러로 부드럽게 ---
-  if (FEATHER_PX > 0) {
-    featherAlpha(data, w, h, FEATHER_PX);
-  }
-
-  ctx.putImageData(imgData, 0, 0);
-
-  // --- 4) bbox 크롭 → 투명 PNG ---
-  const cw = maxX - minX + 1;
-  const ch = maxY - minY + 1;
-  const out = document.createElement("canvas");
-  out.width = cw;
-  out.height = ch;
-  const octx = out.getContext("2d");
-  octx.drawImage(srcCanvas, minX, minY, cw, ch, 0, 0, cw, ch);
-
-  return {
-    dataURL: out.toDataURL("image/png"),
-    width: cw,
-    height: ch,
-    cxRatio: (minX + cw / 2) / w,
-    cyRatio: (minY + ch / 2) / h
-  };
+  return { alpha, w, h };
 }
 
-/* 알파 채널만 박스블러(분리형). 경계가 0↔255 사이에서 부드러워짐. */
-function featherAlpha(data, w, h, radius) {
+/* 알파 배열(Uint8Array, N) 박스블러 — 분리형 */
+function featherAlphaArray(alpha, w, h, radius) {
   const N = w * h;
   const a = new Float32Array(N);
-  for (let p = 0; p < N; p++) a[p] = data[p * 4 + 3];
+  for (let p = 0; p < N; p++) a[p] = alpha[p];
   const tmp = new Float32Array(N);
   const win = radius * 2 + 1;
 
-  // 가로 패스
   for (let y = 0; y < h; y++) {
     const row = y * w;
     let sum = 0;
@@ -797,7 +1115,6 @@ function featherAlpha(data, w, h, radius) {
       sum += a[row + Math.min(w - 1, Math.max(0, xIn))];
     }
   }
-  // 세로 패스
   for (let x = 0; x < w; x++) {
     let sum = 0;
     for (let k = -radius; k <= radius; k++) {
@@ -815,12 +1132,104 @@ function featherAlpha(data, w, h, radius) {
   for (let p = 0; p < N; p++) {
     let v = a[p];
     if (v < 0) v = 0; else if (v > 255) v = 255;
-    data[p * 4 + 3] = v | 0;
+    alpha[p] = v | 0;
   }
 }
 
 /* =========================================================
-   채집 동작 — 메인 화면은 카메라만. 컷아웃은 store로 저장 + 배지/플래시만.
+   @imgly 자동 누끼 — 모듈 1회 로드 후 캐시. 실패시 null.
+   removeBackground(blob) → PNG Blob(전경, 투명). 알파만 추출해 마스크화.
+   ========================================================= */
+let imglyModPromise = null;
+function loadImgly() {
+  if (imglyModPromise) return imglyModPromise;
+  imglyModPromise = (async () => {
+    const mod = await import("https://esm.sh/@imgly/background-removal@1.5.5");
+    // 기본 내보내기(default) = removeBackground. 명명 내보내기도 방어적으로 시도.
+    const fn = mod.default || mod.removeBackground;
+    if (typeof fn !== "function") throw new Error("removeBackground not found");
+    return fn;
+  })();
+  // 실패하면 다음 시도 때 재로드 가능하도록 promise 캐시 해제
+  imglyModPromise.catch(() => { imglyModPromise = null; });
+  return imglyModPromise;
+}
+
+function canvasToBlob(canvas, type, q) {
+  return new Promise((res) => {
+    if (canvas.toBlob) canvas.toBlob((b) => res(b), type, q);
+    else res(null);
+  });
+}
+
+/* @imgly 결과 → 알파 마스크(Uint8Array, N). 실패시 null. 타임아웃 가드. */
+async function imglyMask(srcCanvas) {
+  const w = srcCanvas.width, h = srcCanvas.height;
+  let removeBg;
+  try {
+    removeBg = await withTimeout(loadImgly(), 8000);
+  } catch (e) { return null; }
+
+  let resultBlob;
+  try {
+    const inBlob = await canvasToBlob(srcCanvas, "image/png");
+    if (!inBlob) return null;
+    resultBlob = await withTimeout(
+      removeBg(inBlob, { output: { format: "image/png" } }),
+      15000
+    );
+  } catch (e) { return null; }
+  if (!resultBlob) return null;
+
+  // PNG Blob → 동일 크기 캔버스에 그려 알파 추출
+  try {
+    const bmp = await blobToImage(resultBlob);
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    const cx = c.getContext("2d", { willReadFrequently: true });
+    cx.clearRect(0, 0, w, h);
+    cx.drawImage(bmp, 0, 0, w, h);
+    const d = cx.getImageData(0, 0, w, h).data;
+    const N = w * h;
+    const alpha = new Uint8Array(N);
+    let kept = 0;
+    for (let p = 0; p < N; p++) {
+      const a = d[p * 4 + 3];
+      alpha[p] = a;
+      if (a > 16) kept++;
+    }
+    if (kept < N * MIN_OBJECT_RATIO) return null;
+    return { alpha, w, h };
+  } catch (e) { return null; }
+}
+
+function withTimeout(promise, ms) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("timeout")), ms);
+    promise.then((v) => { clearTimeout(t); resolve(v); },
+                 (e) => { clearTimeout(t); reject(e); });
+  });
+}
+function blobToImage(blob) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); res(img); };
+    img.onerror = (e) => { URL.revokeObjectURL(url); rej(e); };
+    img.src = url;
+  });
+}
+function dataURLToImage(dataURL) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = rej;
+    img.src = dataURL;
+  });
+}
+
+/* =========================================================
+   채집 동작 — 스냅샷 → 자동 누끼 시도 → 누끼 편집기 → 정보 입력
    ========================================================= */
 async function capture() {
   if (busy) return;
@@ -828,16 +1237,14 @@ async function capture() {
   busy = true;
   captureBtn.disabled = true;
 
-  // 플래시
   flashEl.classList.remove("fire");
-  void flashEl.offsetWidth; // 강제 리플로우로 애니메이션 재시작
+  void flashEl.offsetWidth;
   flashEl.classList.add("fire");
 
   try {
     const crop = getSourceCropRect();
     if (!crop) { busy = false; captureBtn.disabled = false; return; }
 
-    // 처리 캔버스 크기: 긴 변 MAX_DIM
     const srcAspect = crop.sWidth / crop.sHeight;
     let pw, ph;
     if (crop.sWidth >= crop.sHeight) {
@@ -860,28 +1267,65 @@ async function capture() {
       0, 0, pw, ph
     );
 
-    const result = removeBackground(proc);
+    // original 스냅샷(JPEG, 저장 공간 절약)
+    const originalCanvas = document.createElement("canvas");
+    originalCanvas.width = pw; originalCanvas.height = ph;
+    originalCanvas.getContext("2d").drawImage(proc, 0, 0);
 
-    if (!result) {
-      bumpCounter(true); // 검출 실패: 카운터 흔들기
-      busy = false;
-      captureBtn.disabled = false;
-      return;
+    // 1) @imgly 자동 누끼 시도 → 실패시 폴백 플러드필
+    showLoader("정밀하게 배경 지우는 중… (안 되면 자동 전환)", true);
+    let maskInfo = null;
+    try {
+      // 모델 시도를 "건너뛰기" 버튼과 경쟁 — 학생이 느린 망에서 기다리지 않게
+      const skipP = new Promise((res) => { loaderSkip.onclick = () => res("__SKIP__"); });
+      const r = await Promise.race([imglyMask(proc), skipP]);
+      maskInfo = (r === "__SKIP__") ? null : r;
+    } catch (e) { maskInfo = null; }
+    loaderSkip.onclick = null;
+    if (!maskInfo) {
+      // 폴백: 플러드필 (proc는 imgly 입력 후에도 픽셀 데이터 보존됨)
+      try { maskInfo = heuristicMask(proc); } catch (e) { maskInfo = null; }
+    }
+    hideLoader();
+
+    // 2) 마스크 캔버스 구성 (없으면 전체 불투명으로 시작 — 사용자가 손으로 지움)
+    const maskCanvas = document.createElement("canvas");
+    maskCanvas.width = pw; maskCanvas.height = ph;
+    const mctx = maskCanvas.getContext("2d");
+    if (maskInfo) {
+      writeAlphaToMaskCanvas(maskCanvas, maskInfo.alpha, pw, ph);
+    } else {
+      // 검출 실패 → 전부 보이게(사용자가 다듬도록)
+      mctx.fillStyle = "#fff";
+      mctx.fillRect(0, 0, pw, ph);
+      toast("자동 배경 제거가 잘 안 됐어요. 손으로 다듬어 주세요.");
     }
 
-    // store에 저장 (bbox 원본 크기)
-    store.push({ dataURL: result.dataURL, w: result.width, h: result.height });
-
-    count++;
-    countEl.textContent = count;
-    updateInvBadge(true);
-    bumpCounter(false);
+    // 3) 누끼 편집기 진입 → 완료시 정보 입력
+    busy = false;
+    captureBtn.disabled = false;
+    openMaskEditor(originalCanvas, maskCanvas, (finalOriginal, finalMask) => {
+      openInfoInput(finalOriginal, finalMask, null);
+    });
   } catch (e) {
     console.error(e);
-  } finally {
+    hideLoader();
     busy = false;
     captureBtn.disabled = false;
   }
+}
+
+/* 알파 배열(Uint8, N)을 maskCanvas에 회색조(흰=불투명)로 기록.
+   maskCanvas는 알파를 RGB 흰색 강도로 저장: 픽셀 = (a,a,a,255) */
+function writeAlphaToMaskCanvas(maskCanvas, alpha, w, h) {
+  const ctx = maskCanvas.getContext("2d");
+  const img = ctx.createImageData(w, h);
+  const d = img.data;
+  for (let p = 0; p < w * h; p++) {
+    const a = alpha[p];
+    d[p * 4] = a; d[p * 4 + 1] = a; d[p * 4 + 2] = a; d[p * 4 + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
 }
 
 function bumpCounter(isFail) {
@@ -893,6 +1337,8 @@ function bumpCounter(isFail) {
 
 function updateInvBadge(animate) {
   invBadge.textContent = String(store.length);
+  countEl.textContent = String(store.length);
+  count = store.length;
   if (animate && !prefersReducedMotion) {
     invBadge.classList.remove("bump");
     void invBadge.offsetWidth;
@@ -901,20 +1347,622 @@ function updateInvBadge(animate) {
 }
 
 /* =========================================================
-   채집물 오버레이 — Matter.js 중력 물리(겹침 없는 적층)
-   폴백: prefers-reduced-motion 또는 Matter 미정의 → 정적 그리드
+   누끼 편집기 — 재사용 가능: openMaskEditor(originalCanvas, maskCanvas, onDone)
+   - originalCanvas: RGBA 스냅샷(≤MAX_DIM)
+   - maskCanvas: 알파(흰=불투명) 회색조 캔버스, 동일 크기
+   - onDone(finalOriginalCanvas, finalMaskCanvas)
+   체커보드 합성 표시 + 지우기/복원 브러시 + 확대/이동 + 되돌리기
+   ========================================================= */
+const Editor = {
+  original: null,   // canvas
+  mask: null,       // canvas (working copy)
+  octx: null,       // editCanvas 2d ctx
+  iw: 0, ih: 0,
+  tool: "erase",    // "erase" | "restore"
+  brush: 26,
+  zoom: 1, panX: 0, panY: 0,
+  minZoom: 1, maxZoom: 8,
+  undoStack: [],    // ImageData snapshots of mask
+  UNDO_CAP: 8,
+  onDone: null,
+  active: false,
+  // pointer state
+  pointers: new Map(),
+  painting: false,
+  lastImg: null,    // last paint point in image coords
+  pinch: null
+};
+
+function openMaskEditor(originalCanvas, maskCanvas, onDone) {
+  Editor.original = originalCanvas;
+  Editor.iw = originalCanvas.width;
+  Editor.ih = originalCanvas.height;
+  // 작업용 복사본
+  const mc = document.createElement("canvas");
+  mc.width = Editor.iw; mc.height = Editor.ih;
+  mc.getContext("2d").drawImage(maskCanvas, 0, 0);
+  Editor.mask = mc;
+  Editor.onDone = onDone;
+  Editor.tool = "erase";
+  Editor.brush = parseInt(brushSizeEl.value, 10) || 26;
+  Editor.undoStack = [];
+  Editor.pointers.clear();
+  Editor.painting = false;
+  Editor.pinch = null;
+  Editor.active = true;
+
+  setTool("erase");
+  editorEl.classList.add("show");
+
+  // 레이아웃 확정 후 fit
+  requestAnimationFrame(() => {
+    fitEditorView();
+    renderEditor();
+  });
+}
+
+function closeMaskEditor() {
+  Editor.active = false;
+  editorEl.classList.remove("show");
+  Editor.pointers.clear();
+  Editor.painting = false;
+  Editor.pinch = null;
+}
+
+function setTool(t) {
+  Editor.tool = t;
+  toolEraseBtn.classList.toggle("active", t === "erase");
+  toolRestoreBtn.classList.toggle("active", t === "restore");
+}
+
+/* 화면에 이미지를 contain으로 맞추는 초기 zoom/pan 계산 */
+function fitEditorView() {
+  const W = editStageWrap.clientWidth;
+  const H = editStageWrap.clientHeight;
+  if (W < 2 || H < 2) return;
+  const dpr = window.devicePixelRatio || 1;
+  // 표시 캔버스를 뷰포트 픽셀 크기로
+  editCanvas.width = Math.round(W * dpr);
+  editCanvas.height = Math.round(H * dpr);
+  editCanvas.style.width = W + "px";
+  editCanvas.style.height = H + "px";
+  Editor.octx = editCanvas.getContext("2d");
+  Editor.viewW = W; Editor.viewH = H; Editor.dpr = dpr;
+
+  const fit = Math.min(W / Editor.iw, H / Editor.ih) * 0.92;
+  Editor.minZoom = fit;
+  Editor.maxZoom = fit * 12;
+  Editor.zoom = fit;
+  // 가운데 정렬
+  Editor.panX = (W - Editor.iw * fit) / 2;
+  Editor.panY = (H - Editor.ih * fit) / 2;
+}
+
+/* 이미지좌표 → 화면(CSS px): screen = img*zoom + pan */
+/* 화면(CSS px) → 이미지좌표: img = (screen - pan) / zoom */
+function screenToImage(sx, sy) {
+  return {
+    x: (sx - Editor.panX) / Editor.zoom,
+    y: (sy - Editor.panY) / Editor.zoom
+  };
+}
+
+/* 체커보드 위에 original×mask 합성을 zoom/pan으로 그림 */
+function renderEditor() {
+  if (!Editor.active) return;
+  const ctx = Editor.octx;
+  const dpr = Editor.dpr;
+  const W = Editor.viewW, H = Editor.viewH;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+
+  // 합성된 컷아웃(투명 PNG처럼)을 임시 캔버스에 만든다
+  const comp = getCompositeCanvas();
+
+  ctx.imageSmoothingEnabled = Editor.zoom < 3; // 확대시 픽셀 또렷
+  ctx.drawImage(
+    comp,
+    0, 0, Editor.iw, Editor.ih,
+    Editor.panX, Editor.panY,
+    Editor.iw * Editor.zoom, Editor.ih * Editor.zoom
+  );
+}
+
+/* original을 mask 알파로 잘라낸 합성 캔버스 (재사용 버퍼) */
+let _compCanvas = null, _compCtx = null;
+function getCompositeCanvas() {
+  if (!_compCanvas) {
+    _compCanvas = document.createElement("canvas");
+  }
+  if (_compCanvas.width !== Editor.iw || _compCanvas.height !== Editor.ih) {
+    _compCanvas.width = Editor.iw;
+    _compCanvas.height = Editor.ih;
+    _compCtx = _compCanvas.getContext("2d");
+  }
+  const ctx = _compCtx;
+  ctx.clearRect(0, 0, Editor.iw, Editor.ih);
+  ctx.globalCompositeOperation = "source-over";
+  ctx.drawImage(Editor.original, 0, 0);
+  // mask의 흰색강도를 알파로: destination-in 하려면 mask를 알파로 변환 필요.
+  // mask 캔버스는 (a,a,a,255)이므로, 알파 캔버스를 만든다.
+  ctx.globalCompositeOperation = "destination-in";
+  ctx.drawImage(getMaskAlphaCanvas(), 0, 0);
+  ctx.globalCompositeOperation = "source-over";
+  return _compCanvas;
+}
+
+/* mask(회색조,a,a,a,255) → 알파 캔버스(흰색, 알파=강도) 변환 버퍼 */
+let _maskAlphaCanvas = null, _maskAlphaCtx = null;
+function getMaskAlphaCanvas() {
+  if (!_maskAlphaCanvas) _maskAlphaCanvas = document.createElement("canvas");
+  if (_maskAlphaCanvas.width !== Editor.iw || _maskAlphaCanvas.height !== Editor.ih) {
+    _maskAlphaCanvas.width = Editor.iw;
+    _maskAlphaCanvas.height = Editor.ih;
+    _maskAlphaCtx = _maskAlphaCanvas.getContext("2d", { willReadFrequently: true });
+  }
+  const mctx = Editor.mask.getContext("2d", { willReadFrequently: true });
+  const src = mctx.getImageData(0, 0, Editor.iw, Editor.ih);
+  const out = _maskAlphaCtx.createImageData(Editor.iw, Editor.ih);
+  const s = src.data, o = out.data;
+  for (let p = 0; p < Editor.iw * Editor.ih; p++) {
+    o[p * 4] = 255; o[p * 4 + 1] = 255; o[p * 4 + 2] = 255;
+    o[p * 4 + 3] = s[p * 4]; // R채널 = 알파강도
+  }
+  _maskAlphaCtx.putImageData(out, 0, 0);
+  return _maskAlphaCanvas;
+}
+
+/* 되돌리기용 마스크 스냅샷 push */
+function pushUndo() {
+  const mctx = Editor.mask.getContext("2d");
+  try {
+    const snap = mctx.getImageData(0, 0, Editor.iw, Editor.ih);
+    Editor.undoStack.push(snap);
+    if (Editor.undoStack.length > Editor.UNDO_CAP) Editor.undoStack.shift();
+  } catch (e) { /* 무시 */ }
+  editUndoBtn.disabled = Editor.undoStack.length === 0;
+}
+function doUndo() {
+  if (Editor.undoStack.length === 0) return;
+  const snap = Editor.undoStack.pop();
+  Editor.mask.getContext("2d").putImageData(snap, 0, 0);
+  editUndoBtn.disabled = Editor.undoStack.length === 0;
+  renderEditor();
+}
+
+/* 브러시로 mask에 칠하기. erase→검정(알파0), restore→흰색(알파255).
+   p0,p1 = 이미지좌표. 선분으로 보간해 끊김 없게. */
+function paintStroke(p0, p1) {
+  const ctx = Editor.mask.getContext("2d");
+  // 화면 브러시 크기를 이미지좌표로 환산 (화면px / zoom)
+  const r = Math.max(1, (Editor.brush / Editor.zoom));
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = r * 2;
+  ctx.strokeStyle = (Editor.tool === "erase") ? "#000" : "#fff";
+  ctx.fillStyle = ctx.strokeStyle;
+  ctx.beginPath();
+  ctx.moveTo(p0.x, p0.y);
+  ctx.lineTo(p1.x, p1.y);
+  ctx.stroke();
+  // 점 끝 채움(단일 탭 대응)
+  ctx.beginPath();
+  ctx.arc(p1.x, p1.y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+/* ---- 에디터 포인터 (Pointer Events: 1손가락=칠하기, 2손가락=핀치 줌/팬) ---- */
+function editPointerDown(e) {
+  if (!Editor.active) return;
+  editCanvas.setPointerCapture && editCanvas.setPointerCapture(e.pointerId);
+  Editor.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+  if (Editor.pointers.size === 1) {
+    // 칠하기 시작
+    Editor.painting = true;
+    pushUndo();
+    const rect = editCanvas.getBoundingClientRect();
+    const img = screenToImage(e.clientX - rect.left, e.clientY - rect.top);
+    Editor.lastImg = img;
+    paintStroke(img, img);
+    renderEditor();
+  } else if (Editor.pointers.size === 2) {
+    // 핀치 시작 → 칠하기 취소(방금 push한 undo 되돌림)
+    if (Editor.painting) {
+      Editor.painting = false;
+      if (Editor.undoStack.length) {
+        const snap = Editor.undoStack.pop();
+        Editor.mask.getContext("2d").putImageData(snap, 0, 0);
+        editUndoBtn.disabled = Editor.undoStack.length === 0;
+      }
+    }
+    startPinch();
+    renderEditor();
+  }
+}
+
+function editPointerMove(e) {
+  if (!Editor.active) return;
+  if (!Editor.pointers.has(e.pointerId)) return;
+  Editor.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+  if (Editor.pointers.size >= 2 && Editor.pinch) {
+    updatePinch();
+    renderEditor();
+    return;
+  }
+  if (Editor.painting && Editor.pointers.size === 1) {
+    const rect = editCanvas.getBoundingClientRect();
+    const img = screenToImage(e.clientX - rect.left, e.clientY - rect.top);
+    paintStroke(Editor.lastImg || img, img);
+    Editor.lastImg = img;
+    renderEditor();
+  }
+}
+
+function editPointerUp(e) {
+  if (!Editor.pointers.has(e.pointerId)) return;
+  Editor.pointers.delete(e.pointerId);
+  try { editCanvas.releasePointerCapture(e.pointerId); } catch (_) {}
+  if (Editor.pointers.size < 2) Editor.pinch = null;
+  if (Editor.pointers.size === 0) {
+    Editor.painting = false;
+    Editor.lastImg = null;
+  }
+}
+
+function pinchCenterAndDist() {
+  const pts = Array.from(Editor.pointers.values());
+  const rect = editCanvas.getBoundingClientRect();
+  const a = { x: pts[0].x - rect.left, y: pts[0].y - rect.top };
+  const b = { x: pts[1].x - rect.left, y: pts[1].y - rect.top };
+  return {
+    cx: (a.x + b.x) / 2,
+    cy: (a.y + b.y) / 2,
+    dist: Math.hypot(a.x - b.x, a.y - b.y)
+  };
+}
+function startPinch() {
+  const pc = pinchCenterAndDist();
+  // 핀치 중심의 이미지좌표 고정점
+  const imgAnchor = screenToImage(pc.cx, pc.cy);
+  Editor.pinch = { startDist: pc.dist, startZoom: Editor.zoom, anchorImg: imgAnchor, lastCx: pc.cx, lastCy: pc.cy };
+}
+function updatePinch() {
+  const pc = pinchCenterAndDist();
+  const k = pc.dist / (Editor.pinch.startDist || 1);
+  let z = Editor.pinch.startZoom * k;
+  z = Math.max(Editor.minZoom, Math.min(Editor.maxZoom, z));
+  Editor.zoom = z;
+  // anchor 이미지점이 현재 핀치 중심에 오도록 pan 조정 + 중심 이동(팬)
+  Editor.panX = pc.cx - Editor.pinch.anchorImg.x * z;
+  Editor.panY = pc.cy - Editor.pinch.anchorImg.y * z;
+}
+
+/* mask(working) → 알파 dataURL(PNG, 회색조) 로 직렬화(저장용) */
+function maskToDataURL(maskCanvas) {
+  return maskCanvas.toDataURL("image/png");
+}
+
+/* original + mask → 표시용 투명 PNG(컷아웃, bbox 크롭) dataURL + 크기 */
+function composeCutout(originalCanvas, maskCanvas) {
+  const w = originalCanvas.width, h = originalCanvas.height;
+  // 알파 캔버스
+  const mctx = maskCanvas.getContext("2d", { willReadFrequently: true });
+  const md = mctx.getImageData(0, 0, w, h).data;
+
+  // bbox
+  let minX = w, minY = h, maxX = -1, maxY = -1;
+  for (let p = 0; p < w * h; p++) {
+    if (md[p * 4] > 12) {
+      const x = p % w, y = (p - (p % w)) / w;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+  if (maxX < 0) { minX = 0; minY = 0; maxX = w - 1; maxY = h - 1; }
+  const cw = maxX - minX + 1, ch = maxY - minY + 1;
+
+  // 합성 캔버스(전체) → 크롭
+  const full = document.createElement("canvas");
+  full.width = w; full.height = h;
+  const fctx = full.getContext("2d");
+  fctx.drawImage(originalCanvas, 0, 0);
+  // 알파 적용
+  const alphaCanvas = document.createElement("canvas");
+  alphaCanvas.width = w; alphaCanvas.height = h;
+  const actx = alphaCanvas.getContext("2d");
+  const aimg = actx.createImageData(w, h);
+  for (let p = 0; p < w * h; p++) {
+    aimg.data[p * 4] = 255; aimg.data[p * 4 + 1] = 255; aimg.data[p * 4 + 2] = 255;
+    aimg.data[p * 4 + 3] = md[p * 4];
+  }
+  actx.putImageData(aimg, 0, 0);
+  fctx.globalCompositeOperation = "destination-in";
+  fctx.drawImage(alphaCanvas, 0, 0);
+  fctx.globalCompositeOperation = "source-over";
+
+  const out = document.createElement("canvas");
+  out.width = cw; out.height = ch;
+  out.getContext("2d").drawImage(full, minX, minY, cw, ch, 0, 0, cw, ch);
+  return { dataURL: out.toDataURL("image/png"), w: cw, h: ch };
+}
+
+// 에디터 이벤트 바인딩
+editCanvas.addEventListener("pointerdown", editPointerDown);
+editCanvas.addEventListener("pointermove", editPointerMove);
+editCanvas.addEventListener("pointerup", editPointerUp);
+editCanvas.addEventListener("pointercancel", editPointerUp);
+editCanvas.addEventListener("pointerleave", editPointerUp);
+toolEraseBtn.addEventListener("click", () => setTool("erase"));
+toolRestoreBtn.addEventListener("click", () => setTool("restore"));
+brushSizeEl.addEventListener("input", () => { Editor.brush = parseInt(brushSizeEl.value, 10) || 26; });
+editUndoBtn.addEventListener("click", doUndo);
+editCancelBtn.addEventListener("click", () => { const cb = Editor.onCancel; closeMaskEditor(); if (cb) cb(); });
+editDoneBtn.addEventListener("click", () => {
+  const orig = Editor.original;
+  const mask = Editor.mask;
+  const cb = Editor.onDone;
+  closeMaskEditor();
+  if (cb) cb(orig, mask);
+});
+
+/* =========================================================
+   정보 입력 화면
+   mode: editingItem(null=신규) 있으면 수정.
+   pendingOriginal/Mask = 신규/재누끼 시 합성에 쓸 캔버스
+   ========================================================= */
+let infoCtx = null; // { original, mask, item }
+function openInfoInput(originalCanvas, maskCanvas, existingItem) {
+  infoCtx = { original: originalCanvas, mask: maskCanvas, item: existingItem };
+  infoTitle.textContent = existingItem ? "정보 수정" : "정보 입력";
+
+  // 미리보기(합성 컷아웃)
+  const cut = composeCutout(originalCanvas, maskCanvas);
+  infoCtx.cutout = cut;
+  infoPreview.src = cut.dataURL;
+
+  // 필드 채우기
+  if (existingItem) {
+    inName.value = existingItem.name || "";
+    inPlace.value = existingItem.location || "";
+    inNote.value = existingItem.note || "";
+    inDate.value = existingItem.date || todayStr();
+  } else {
+    inName.value = "";
+    inPlace.value = "";
+    inNote.value = "";
+    inDate.value = todayStr();
+  }
+  fName.classList.remove("invalid");
+  infoSheet.classList.add("show");
+  setTimeout(() => { try { inName.focus(); } catch (_) {} }, 50);
+}
+function closeInfoInput() { infoSheet.classList.remove("show"); infoCtx = null; }
+
+function todayStr(d) {
+  const dt = d ? new Date(d) : new Date();
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, "0");
+  const day = String(dt.getDate()).padStart(2, "0");
+  return y + "-" + m + "-" + day;
+}
+
+function saveInfo() {
+  const name = inName.value.trim();
+  if (!name) {
+    fName.classList.add("invalid");
+    try { inName.focus(); } catch (_) {}
+    return;
+  }
+  fName.classList.remove("invalid");
+
+  const original = infoCtx.original;
+  const mask = infoCtx.mask;
+  const cut = infoCtx.cutout || composeCutout(original, mask);
+
+  const originalURL = original.toDataURL("image/jpeg", JPEG_Q);
+  const maskURL = mask.toDataURL("image/png");
+
+  if (infoCtx.item) {
+    // 수정
+    const it = infoCtx.item;
+    it.name = name;
+    it.location = inPlace.value.trim();
+    it.note = inNote.value.trim();
+    it.date = inDate.value || todayStr();
+    it.image = cut.dataURL;
+    it.original = originalURL;
+    it.mask = maskURL;
+  } else {
+    // 신규
+    const it = {
+      id: nextId++,
+      image: cut.dataURL,
+      original: originalURL,
+      mask: maskURL,
+      name: name,
+      location: inPlace.value.trim(),
+      note: inNote.value.trim(),
+      date: inDate.value || todayStr(),
+      createdAt: Date.now()
+    };
+    store.push(it);
+  }
+
+  const ok = persist();
+  closeInfoInput();
+  if (ok) {
+    updateInvBadge(true);
+    bumpCounter(false);
+  }
+}
+
+/* 현재 위치 → 장소 채우기 (선택, 권한/미지원 graceful) */
+function fillGeo() {
+  if (!navigator.geolocation) {
+    toast("이 기기에서는 위치를 쓸 수 없어요. 직접 적어 주세요.");
+    return;
+  }
+  geoBtn.disabled = true;
+  geoBtn.textContent = "찾는 중…";
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const la = pos.coords.latitude.toFixed(5);
+      const lo = pos.coords.longitude.toFixed(5);
+      inPlace.value = "위도 " + la + ", 경도 " + lo;
+      geoBtn.disabled = false;
+      geoBtn.textContent = "현재 위치";
+    },
+    (err) => {
+      geoBtn.disabled = false;
+      geoBtn.textContent = "현재 위치";
+      if (err && err.code === 1) toast("위치 권한이 거부됐어요. 장소를 직접 적어 주세요.");
+      else toast("위치를 찾지 못했어요. 직접 적어 주세요.");
+    },
+    { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+  );
+}
+
+infoCancelBtn.addEventListener("click", closeInfoInput);
+infoSaveBtn.addEventListener("click", saveInfo);
+geoBtn.addEventListener("click", fillGeo);
+
+/* =========================================================
+   localStorage 저장/로드
+   ========================================================= */
+function persist() {
+  try {
+    const payload = JSON.stringify({ v: 2, nextId: nextId, items: store });
+    localStorage.setItem(LS_KEY, payload);
+    return true;
+  } catch (e) {
+    if (e && (e.name === "QuotaExceededError" || e.code === 22 || e.code === 1014)) {
+      toast("저장 공간이 가득 찼어요. ‘내보내기’로 백업한 뒤 일부를 정리해 주세요.", 5000);
+    } else {
+      toast("저장 중 문제가 생겼어요.");
+    }
+    return false;
+  }
+}
+
+function loadStore() {
+  let raw = null;
+  try { raw = localStorage.getItem(LS_KEY); } catch (e) { raw = null; }
+  if (!raw) return;
+  let obj = null;
+  try { obj = JSON.parse(raw); } catch (e) { obj = null; }
+  if (!obj || !Array.isArray(obj.items)) return;
+  for (const it of obj.items) {
+    if (!it || typeof it !== "object") continue;
+    if (!it.image) continue;
+    store.push({
+      id: typeof it.id === "number" ? it.id : nextId++,
+      image: it.image,
+      original: it.original || it.image,
+      mask: it.mask || null,
+      name: typeof it.name === "string" ? it.name : "",
+      location: typeof it.location === "string" ? it.location : "",
+      note: typeof it.note === "string" ? it.note : "",
+      date: typeof it.date === "string" ? it.date : todayStr(it.createdAt),
+      createdAt: typeof it.createdAt === "number" ? it.createdAt : Date.now()
+    });
+  }
+  let maxId = 0;
+  for (const it of store) if (it.id > maxId) maxId = it.id;
+  nextId = Math.max(typeof obj.nextId === "number" ? obj.nextId : 0, maxId + 1);
+}
+
+/* =========================================================
+   내보내기 / 가져오기
+   ========================================================= */
+function exportJSON() {
+  if (store.length === 0) { toast("내보낼 채집물이 없어요."); return; }
+  const payload = JSON.stringify({ v: 2, exportedAt: Date.now(), items: store }, null, 0);
+  const blob = new Blob([payload], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = todayStr();
+  a.href = url;
+  a.download = "채집도감_" + stamp + ".json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  toast("도감을 내보냈어요.");
+}
+
+function importJSONFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    let obj = null;
+    try { obj = JSON.parse(String(reader.result)); } catch (e) { obj = null; }
+    if (!obj || !Array.isArray(obj.items)) {
+      toast("파일을 읽지 못했어요. 올바른 도감 파일인지 확인해 주세요.");
+      return;
+    }
+    let added = 0;
+    let maxId = 0;
+    for (const it of store) if (it.id > maxId) maxId = it.id;
+    for (const it of obj.items) {
+      if (!it || !it.image) continue;
+      store.push({
+        id: ++maxId,
+        image: it.image,
+        original: it.original || it.image,
+        mask: it.mask || null,
+        name: typeof it.name === "string" ? it.name : "",
+        location: typeof it.location === "string" ? it.location : "",
+        note: typeof it.note === "string" ? it.note : "",
+        date: typeof it.date === "string" ? it.date : todayStr(it.createdAt),
+        createdAt: typeof it.createdAt === "number" ? it.createdAt : Date.now()
+      });
+      added++;
+    }
+    nextId = maxId + 1;
+    const ok = persist();
+    updateInvBadge(true);
+    invCountLabel.textContent = store.length + "개";
+    if (Phys.open) refreshInventoryView();
+    toast(added + "개를 불러왔어요." + (ok ? "" : " (저장 공간 부족)"));
+  };
+  reader.onerror = () => toast("파일을 읽지 못했어요.");
+  reader.readAsText(file);
+}
+
+invExportBtn.addEventListener("click", exportJSON);
+invImportBtn.addEventListener("click", () => importFile.click());
+importFile.addEventListener("change", (e) => {
+  const f = e.target.files && e.target.files[0];
+  if (f) importJSONFile(f);
+  importFile.value = "";
+});
+
+/* =========================================================
+   채집 도감 오버레이 — Matter.js 중력 + 드래그(MouseConstraint) + 탭→상세
+   폴백: Matter 미정의 → 정적 그리드
    ========================================================= */
 const Phys = {
   engine: null,
   runner: null,
   render: null,
+  mouse: null,
+  mouseConstraint: null,
   orientHandler: null,
-  open: false
+  bodyById: new Map(),  // item.id -> body
+  open: false,
+  // tap vs drag 판별
+  downPos: null,
+  downBody: null,
+  downTime: 0,
+  moved: 0
 };
 
 function physicsAvailable() {
-  // reduce-motion이어도 "떨어뜨림"은 유지(앱 핵심) — buildPhysics에서 차분 모드로 처리.
-  // Matter 로드 실패(CDN 차단 등)일 때만 격자 폴백.
   return typeof window.Matter !== "undefined";
 }
 
@@ -923,20 +1971,25 @@ function openInventory() {
   Phys.open = true;
   inventoryEl.classList.add("show");
   invCountLabel.textContent = store.length + "개";
+  refreshInventoryView();
+}
 
+function refreshInventoryView() {
   const empty = store.length === 0;
   invEmpty.classList.toggle("show", empty);
+  invCountLabel.textContent = store.length + "개";
+
+  // 항상 깨끗이 정리 후 재구성
+  teardownPhysics();
+  invGrid.classList.remove("show");
+  invGrid.innerHTML = "";
 
   if (empty) {
-    invGrid.classList.remove("show");
     invCanvas.style.display = "none";
     return;
   }
-
   if (physicsAvailable()) {
     invCanvas.style.display = "block";
-    invGrid.classList.remove("show");
-    // 레이아웃 확정 후 빌드
     requestAnimationFrame(() => buildPhysics());
   } else {
     invCanvas.style.display = "none";
@@ -953,35 +2006,40 @@ function closeInventory() {
   invGrid.innerHTML = "";
 }
 
-/* 폴백 정적 그리드 */
+/* 폴백 정적 그리드 (탭→상세) */
 function buildGrid() {
   invGrid.innerHTML = "";
   for (const it of store) {
     const cell = document.createElement("div");
     cell.className = "gridItem";
     const img = document.createElement("img");
-    img.src = it.dataURL;
+    img.src = it.image;
+    const nm = document.createElement("div");
+    nm.className = "gName";
+    nm.textContent = it.name || "이름 없음";
     cell.appendChild(img);
+    cell.appendChild(nm);
+    cell.addEventListener("click", () => openDetail(it.id));
     invGrid.appendChild(cell);
   }
   invGrid.classList.add("show");
 }
 
-/* Matter.js 물리 파일 빌드 */
+/* Matter.js 물리 빌드 */
 function buildPhysics() {
   if (!Phys.open) return;
   const M = window.Matter;
-  const { Engine, Render, Runner, Bodies, Composite, Body } = M;
+  const { Engine, Render, Runner, Bodies, Composite, Body, Mouse, MouseConstraint, Events } = M;
 
   const vw = invViewport.clientWidth;
   const vh = invViewport.clientHeight;
   if (vw < 2 || vh < 2) return;
 
   const dpr = window.devicePixelRatio || 1;
+  const calm = prefersReducedMotion;
 
-  const calm = prefersReducedMotion; // 동작 줄이기: 떨어지되 차분하게(회전·튕김 X, 빨리 안착)
   const engine = Engine.create();
-  engine.gravity.y = calm ? 1.5 : 1; // calm이면 중력 키워 빠르게 안착
+  engine.gravity.y = calm ? 1.5 : 1;
   engine.gravity.x = 0;
 
   const render = Render.create({
@@ -996,7 +2054,6 @@ function buildPhysics() {
     }
   });
 
-  // 정적 경계: 바닥 + 좌/우 벽 + 천장
   const wallOpts = { isStatic: true, restitution: 0.2, friction: 0.6, render: { visible: false } };
   const floor = Bodies.rectangle(vw / 2, vh + WALL_THICK / 2, vw + WALL_THICK * 2, WALL_THICK, wallOpts);
   const left  = Bodies.rectangle(-WALL_THICK / 2, vh / 2, WALL_THICK, vh * 2, wallOpts);
@@ -1006,61 +2063,94 @@ function buildPhysics() {
 
   Phys.engine = engine;
   Phys.render = render;
+  Phys.bodyById = new Map();
   Render.run(render);
   const runner = Runner.create();
   Runner.run(runner, engine);
   Phys.runner = runner;
 
-  // 컷아웃을 하나씩 staggered 드롭
+  // MouseConstraint — 집어서 드래그 (겹침은 충돌이 막아줌)
+  const mouse = Mouse.create(render.canvas);
+  // 캔버스가 dpr 스케일이어도 Mouse는 CSS px 기준. pixelRatio 보정.
+  if (mouse.pixelRatio !== undefined) mouse.pixelRatio = dpr;
+  const mouseConstraint = MouseConstraint.create(engine, {
+    mouse: mouse,
+    constraint: { stiffness: 0.2, render: { visible: false } }
+  });
+  Composite.add(engine.world, mouseConstraint);
+  Phys.mouse = mouse;
+  Phys.mouseConstraint = mouseConstraint;
+  render.mouse = mouse;
+
+  // tap vs drag 판별 (이동<8px & 빠름 = 탭 → 상세)
+  Events.on(mouseConstraint, "mousedown", () => {
+    Phys.downPos = { x: mouse.position.x, y: mouse.position.y };
+    Phys.downBody = mouseConstraint.body || null;
+    Phys.downTime = Date.now();
+    Phys.moved = 0;
+  });
+  Events.on(mouseConstraint, "mousemove", () => {
+    if (Phys.downPos) {
+      const dx = mouse.position.x - Phys.downPos.x;
+      const dy = mouse.position.y - Phys.downPos.y;
+      const d = Math.hypot(dx, dy);
+      if (d > Phys.moved) Phys.moved = d;
+    }
+  });
+  Events.on(mouseConstraint, "mouseup", () => {
+    const dt = Date.now() - Phys.downTime;
+    const body = Phys.downBody;
+    if (body && body.plugin && body.plugin.itemId != null && Phys.moved < 8 && dt < 400) {
+      openDetail(body.plugin.itemId);
+    }
+    Phys.downPos = null;
+    Phys.downBody = null;
+  });
+
+  // 컷아웃 staggered 드롭
   const drops = store.slice();
   let i = 0;
   function dropNext() {
-    if (!Phys.open || Phys.engine !== engine) return; // 닫혔거나 재빌드됨
+    if (!Phys.open || Phys.engine !== engine) return;
     if (i >= drops.length) return;
     const it = drops[i++];
 
-    // 화면 표시 크기(최대/최소 캡) — 텍스처 스케일 계산
-    const natMax = Math.max(it.w, it.h) || 1;
+    const iw = imgNatW(it), ih = imgNatH(it);
+    const natMax = Math.max(iw, ih) || 1;
     let scale = PHYS_MAX_DIM / natMax;
-    const minNat = Math.min(it.w, it.h) || 1;
+    const minNat = Math.min(iw, ih) || 1;
     if (minNat * scale < PHYS_MIN_DIM) scale = PHYS_MIN_DIM / minNat;
-    const bw = Math.max(8, it.w * scale);
-    const bh = Math.max(8, it.h * scale);
-
-    // 스프라이트 텍스처 스케일: 바디 bbox에 PNG가 딱 맞도록
-    const xScale = bw / it.w;
-    const yScale = bh / it.h;
+    const bw = Math.max(8, iw * scale);
+    const bh = Math.max(8, ih * scale);
+    const xScale = bw / iw;
+    const yScale = bh / ih;
 
     const x = bw / 2 + Math.random() * Math.max(1, (vw - bw));
     const y = -bh - Math.random() * 40;
 
     const body = Bodies.rectangle(x, y, bw, bh, {
-      restitution: calm ? 0 : 0.2,   // calm: 튕김 없음
+      restitution: calm ? 0 : 0.2,
       friction: 0.6,
       frictionAir: calm ? 0.02 : 0.01,
-      render: {
-        sprite: { texture: it.dataURL, xScale: xScale, yScale: yScale }
-      }
+      render: { sprite: { texture: it.image, xScale: xScale, yScale: yScale } }
     });
-    if (!calm) Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.1); // calm: 회전 없음
+    body.plugin = { itemId: it.id };
+    Phys.bodyById.set(it.id, body);
+    if (!calm) Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.1);
     Composite.add(engine.world, body);
 
-    if (i < drops.length) {
-      setTimeout(dropNext, DROP_STAGGER_MS);
-    }
+    if (i < drops.length) setTimeout(dropNext, DROP_STAGGER_MS);
   }
   dropNext();
 
-  // OPTIONAL: deviceorientation → 중력 방향 기울이기 (미지원/권한없음 시 조용히 스킵)
+  // deviceorientation 기울임 (선택)
   try {
     if (!prefersReducedMotion &&
         typeof window.DeviceOrientationEvent !== "undefined" &&
         typeof window.DeviceOrientationEvent.requestPermission !== "function") {
-      // iOS 권한 프롬프트가 필요한 경우는 자동 요청하지 않고 스킵(제스처 정책)
       const handler = (e) => {
         if (!Phys.engine || Phys.engine !== engine) return;
-        const g = e.gamma; // 좌우 기울기 (-90..90)
-        const b = e.beta;  // 앞뒤 기울기 (-180..180)
+        const g = e.gamma, b = e.beta;
         if (g == null || b == null) return;
         engine.gravity.x = Math.max(-1, Math.min(1, g / 45));
         engine.gravity.y = Math.max(-1, Math.min(1, Math.max(0.2, b / 45)));
@@ -1068,10 +2158,21 @@ function buildPhysics() {
       window.addEventListener("deviceorientation", handler);
       Phys.orientHandler = handler;
     }
-  } catch (_) { /* 조용히 무시 */ }
+  } catch (_) {}
 }
 
-/* 물리 정리 — 누수/중복 러너 방지 */
+// 컷아웃 자연 크기: 캐시된 Image 사용(없으면 추정 후 onload 갱신은 생략, 정사각 가정)
+const _natCache = new Map();
+function ensureNat(it) {
+  if (_natCache.has(it.id)) return;
+  const img = new Image();
+  img.onload = () => { _natCache.set(it.id, { w: img.naturalWidth, h: img.naturalHeight }); };
+  img.src = it.image;
+  _natCache.set(it.id, { w: 0, h: 0 }); // placeholder
+}
+function imgNatW(it) { const n = _natCache.get(it.id); return (n && n.w) ? n.w : 100; }
+function imgNatH(it) { const n = _natCache.get(it.id); return (n && n.h) ? n.h : 100; }
+
 function teardownPhysics() {
   const M = window.Matter;
   if (Phys.orientHandler) {
@@ -1079,10 +2180,12 @@ function teardownPhysics() {
     Phys.orientHandler = null;
   }
   if (M) {
+    if (Phys.mouseConstraint && Phys.engine) {
+      try { M.Composite.remove(Phys.engine.world, Phys.mouseConstraint); } catch (_) {}
+    }
     if (Phys.render) {
       M.Render.stop(Phys.render);
-      if (Phys.render.context && Phys.render.canvas) {
-        // 캔버스 비우기(텍스처 메모리 해제 유도)
+      if (Phys.render.canvas) {
         const c = Phys.render.canvas;
         const cx = c.getContext("2d");
         if (cx) cx.clearRect(0, 0, c.width, c.height);
@@ -1098,45 +2201,151 @@ function teardownPhysics() {
   Phys.render = null;
   Phys.runner = null;
   Phys.engine = null;
+  Phys.mouse = null;
+  Phys.mouseConstraint = null;
+  Phys.bodyById = new Map();
+  Phys.downPos = null;
+  Phys.downBody = null;
 }
 
-/* 비우기 */
-function clearStore() {
-  store.length = 0;
-  count = 0;
-  countEl.textContent = "0";
+/* =========================================================
+   상세 화면 — 보기/수정/재누끼/삭제
+   ========================================================= */
+let detailId = null;
+function findItem(id) { return store.find((x) => x.id === id) || null; }
+
+function openDetail(id) {
+  const it = findItem(id);
+  if (!it) return;
+  detailId = id;
+  detailImg.src = it.image;
+  dvName.textContent = it.name || "(이름 없음)";
+  dvPlace.textContent = it.location || "—";
+  dvNote.textContent = it.note || "—";
+  dvDate.textContent = it.date || "—";
+  detailSheet.classList.add("show");
+}
+function closeDetail() { detailSheet.classList.remove("show"); detailId = null; }
+
+/* 상세에서 정보 수정 */
+async function detailEditInfo() {
+  const it = findItem(detailId);
+  if (!it) return;
+  // 원본/마스크 캔버스 복원
+  const oc = await dataURLToCanvas(it.original || it.image);
+  let mc;
+  if (it.mask) mc = await dataURLToMaskCanvas(it.mask, oc.width, oc.height);
+  else mc = fullMaskCanvas(oc.width, oc.height);
+  closeDetail();
+  openInfoInput(oc, mc, it);
+}
+
+/* 상세에서 누끼 다시 다듬기 */
+async function detailEditMask() {
+  const it = findItem(detailId);
+  if (!it) return;
+  const oc = await dataURLToCanvas(it.original || it.image);
+  let mc;
+  if (it.mask) mc = await dataURLToMaskCanvas(it.mask, oc.width, oc.height);
+  else mc = fullMaskCanvas(oc.width, oc.height);
+  closeDetail();
+  openMaskEditor(oc, mc, (finalOrig, finalMask) => {
+    // 재누끼 결과를 그대로 저장(정보는 유지)
+    const cut = composeCutout(finalOrig, finalMask);
+    it.image = cut.dataURL;
+    it.original = finalOrig.toDataURL("image/jpeg", JPEG_Q);
+    it.mask = finalMask.toDataURL("image/png");
+    persist();
+    updateInvBadge(false);
+    if (Phys.open) refreshInventoryView();
+    toast("누끼를 다시 저장했어요.");
+  });
+}
+
+function detailDelete() {
+  const it = findItem(detailId);
+  if (!it) return;
+  if (!confirm("이 채집물을 삭제할까요?")) return;
+  const idx = store.findIndex((x) => x.id === detailId);
+  if (idx >= 0) store.splice(idx, 1);
+  _natCache.delete(it.id);
+  persist();
   updateInvBadge(false);
-  invCountLabel.textContent = "0개";
-  // 열려있으면 즉시 반영
-  if (Phys.open) {
-    teardownPhysics();
-    invGrid.classList.remove("show");
-    invGrid.innerHTML = "";
-    invCanvas.style.display = "none";
-    invEmpty.classList.add("show");
-  }
+  closeDetail();
+  if (Phys.open) refreshInventoryView();
+  toast("삭제했어요.");
 }
 
-// ---- 이벤트 ----
+detailCloseBtn.addEventListener("click", closeDetail);
+detailEditInfoBtn.addEventListener("click", detailEditInfo);
+detailEditMaskBtn.addEventListener("click", detailEditMask);
+detailDeleteBtn.addEventListener("click", detailDelete);
+
+/* dataURL → RGBA 캔버스 */
+async function dataURLToCanvas(dataURL) {
+  const img = await dataURLToImage(dataURL);
+  const c = document.createElement("canvas");
+  c.width = img.naturalWidth || img.width;
+  c.height = img.naturalHeight || img.height;
+  c.getContext("2d").drawImage(img, 0, 0);
+  return c;
+}
+/* 저장된 mask dataURL(회색조) → 마스크 캔버스(w×h로 맞춤) */
+async function dataURLToMaskCanvas(dataURL, w, h) {
+  const img = await dataURLToImage(dataURL);
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  c.getContext("2d").drawImage(img, 0, 0, w, h);
+  return c;
+}
+/* 전부 보이는(흰색) 마스크 캔버스 */
+function fullMaskCanvas(w, h) {
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, w, h);
+  return c;
+}
+
+/* =========================================================
+   이벤트 바인딩 (메인)
+   ========================================================= */
 captureBtn.addEventListener("click", capture);
 invBtn.addEventListener("click", openInventory);
 invCloseBtn.addEventListener("click", closeInventory);
-invClearBtn.addEventListener("click", clearStore);
 
-// 화면 탭(컨트롤 외 영역)으로도 채집 가능하게 — 편의
+// 화면 탭으로도 채집 (편집/입력/상세 화면이 떠있지 않을 때만)
 stage.addEventListener("click", (e) => {
+  if (editorEl.classList.contains("show") ||
+      infoSheet.classList.contains("show") ||
+      detailSheet.classList.contains("show") ||
+      inventoryEl.classList.contains("show")) return;
   if (e.target === video || e.target === stage) capture();
 });
 
-// 탭 복귀 시 카메라가 멈춰있으면 재개
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && video.paused && stream) {
     video.play().catch(() => {});
   }
 });
 
-// 시작
+// 화면 회전/리사이즈 시 에디터 뷰 재맞춤
+window.addEventListener("resize", () => {
+  if (Editor.active) {
+    fitEditorView();
+    renderEditor();
+  }
+});
+
+/* =========================================================
+   시작
+   ========================================================= */
+loadStore();
+// 저장된 컷아웃 자연 크기 미리 로드(물리용)
+for (const it of store) ensureNat(it);
 updateInvBadge(false);
+editUndoBtn.disabled = true;
 startCamera();
 </script>
 </body>
