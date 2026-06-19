@@ -16,7 +16,6 @@
     --text: #e8ebf2;
     --muted: #9aa1b1;
     --danger: #ff6b6b;
-    --tray-h: 168px;
   }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -148,21 +147,6 @@
     100% { opacity: 0; }
   }
 
-  /* falling cutout sprites live here */
-  #fxLayer {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 8;
-    overflow: hidden;
-  }
-  .sprite {
-    position: absolute;
-    will-change: transform, opacity;
-    filter: drop-shadow(0 6px 10px rgba(0,0,0,0.5));
-  }
-  .sprite img { display: block; width: 100%; height: 100%; }
-
   /* ===== Controls ===== */
   #controls {
     position: relative;
@@ -172,25 +156,11 @@
     align-items: center;
     justify-content: space-between;
     gap: 14px;
-    padding: 14px 22px;
+    padding: 14px 22px calc(14px + env(safe-area-inset-bottom, 0px));
     background: linear-gradient(180deg, rgba(14,15,19,0.0), rgba(14,15,19,0.9) 40%, var(--bg));
   }
 
-  #clearBtn {
-    flex: 0 0 auto;
-    width: 64px; height: 64px;
-    border-radius: 16px;
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    color: var(--muted);
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  #clearBtn:active { background: #262a35; }
+  #spacerLeft { width: 64px; height: 64px; flex: 0 0 auto; }
 
   /* Capture button */
   #captureBtn {
@@ -210,34 +180,107 @@
   #captureBtn:active { transform: scale(0.92); }
   #captureBtn:disabled { opacity: 0.5; cursor: default; }
 
-  #spacer { width: 64px; height: 64px; flex: 0 0 auto; }
-
-  /* ===== Tray ===== */
-  #tray {
+  /* 채집물(inventory) open button — bottom-right corner */
+  #invBtn {
+    position: relative;
     flex: 0 0 auto;
-    height: var(--tray-h);
+    width: 64px; height: 64px;
+    border-radius: 16px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #invBtn:active { background: #262a35; }
+  #invBadge {
+    position: absolute;
+    top: -6px; right: -6px;
+    min-width: 22px; height: 22px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #06210f;
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    transform-origin: center;
+  }
+  #invBadge.bump { animation: badgeBump 320ms cubic-bezier(.18,1.5,.5,1); }
+  @keyframes badgeBump {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1); }
+  }
+
+  /* ===== Inventory overlay (채집물) — physics pile ===== */
+  #inventory {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
     background:
       repeating-linear-gradient(45deg, rgba(255,255,255,0.012) 0 12px, rgba(255,255,255,0) 12px 24px),
       var(--panel);
-    border-top: 1px solid var(--line);
+    display: none;
+    flex-direction: column;
+  }
+  #inventory.show { display: flex; }
+  #invHeader {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: calc(env(safe-area-inset-top, 0px) + 14px) 18px 12px;
+    z-index: 2;
+  }
+  #invTitle { font-size: 17px; font-weight: 800; letter-spacing: 0.3px; }
+  #invTitle small { color: var(--muted); font-weight: 600; font-size: 13px; margin-left: 6px; }
+  #invHeader .btns { display: flex; gap: 10px; }
+  #invClearBtn, #invCloseBtn {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  #invClearBtn { background: var(--panel-2); color: var(--muted); }
+  #invClearBtn:active { background: #262a35; }
+  #invCloseBtn { background: var(--accent); color: #06210f; border-color: transparent; }
+
+  #invViewport {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+  #invCanvas { position: absolute; inset: 0; display: block; }
+
+  /* fallback static grid */
+  #invGrid {
+    position: absolute;
+    inset: 0;
     overflow-y: auto;
     overflow-x: hidden;
     padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
-    display: flex;
+    display: none;
     flex-wrap: wrap;
     align-content: flex-start;
-    gap: 8px;
+    gap: 10px;
     -webkit-overflow-scrolling: touch;
   }
-  #tray:empty::before {
-    content: "여기에 채집한 것들이 쌓여요";
-    color: var(--muted);
-    font-size: 13px;
-    margin: auto;
-  }
-  .item {
-    width: 72px;
-    height: 72px;
+  #invGrid.show { display: flex; }
+  .gridItem {
+    width: 84px;
+    height: 84px;
     border-radius: 12px;
     background: var(--panel-2);
     border: 1px solid var(--line);
@@ -247,17 +290,19 @@
     overflow: hidden;
     flex: 0 0 auto;
   }
-  .item img {
-    max-width: 90%;
-    max-height: 90%;
-    object-fit: contain;
+  .gridItem img { max-width: 90%; max-height: 90%; object-fit: contain; }
+
+  #invEmpty {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 14px;
+    pointer-events: none;
   }
-  .item.pop { animation: pop 360ms cubic-bezier(.18,1.5,.5,1); }
-  @keyframes pop {
-    0% { transform: scale(0.2); opacity: 0; }
-    60% { transform: scale(1.12); }
-    100% { transform: scale(1); opacity: 1; }
-  }
+  #invEmpty.show { display: flex; }
 
   /* ===== Overlay (errors / guidance) ===== */
   #overlay {
@@ -295,8 +340,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     #flash.fire { animation-duration: 120ms; }
-    .item.pop { animation: none; }
-    .sprite { transition: none !important; }
+    #invBadge.bump { animation: none; }
   }
 </style>
 </head>
@@ -312,17 +356,33 @@
       <span class="hint">대상을 가운데 맞추고 채집</span>
     </div>
     <div id="counter">채집 <b id="count">0</b></div>
-    <div id="fxLayer"></div>
     <div id="flash"></div>
   </div>
 
   <div id="controls">
-    <button id="clearBtn" title="비우기">비우기</button>
+    <div id="spacerLeft"></div>
     <button id="captureBtn">채집</button>
-    <div id="spacer"></div>
+    <button id="invBtn" title="채집물">
+      채집물
+      <span id="invBadge">0</span>
+    </button>
   </div>
+</div>
 
-  <div id="tray"></div>
+<!-- 채집물(inventory) full overlay -->
+<div id="inventory">
+  <div id="invHeader">
+    <div id="invTitle">채집물 <small id="invCountLabel">0개</small></div>
+    <div class="btns">
+      <button id="invClearBtn" title="비우기">비우기</button>
+      <button id="invCloseBtn" title="닫기">닫기</button>
+    </div>
+  </div>
+  <div id="invViewport">
+    <canvas id="invCanvas"></canvas>
+    <div id="invGrid"></div>
+    <div id="invEmpty">아직 채집한 것이 없어요</div>
+  </div>
 </div>
 
 <div id="overlay">
@@ -334,34 +394,56 @@
   </div>
 </div>
 
+<!-- Matter.js (physics) — pinned version, CDN. Fallback to static grid if blocked. -->
+<script src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js"></script>
 <script>
 "use strict";
 
 /* =========================================================
    채집 카메라 — 단일 파일 바닐라 웹앱
-   배경 제거: 모서리 시드 기반 플러드필 (ML 없음, 오프라인 즉시)
+   배경 제거: 다중-에지 샘플 + LAB 거리 플러드필 (ML 없음, 오프라인 즉시)
+   채집물: Matter.js 중력 물리 더미(겹침 없는 충돌 적층), 폴백=정적 그리드
    ========================================================= */
 
-// ---- 튜닝 상수 ----
+// ---- 튜닝 상수 (배경 제거) ----
 const MAX_DIM = 640;        // 처리 캔버스 긴 변 길이(px). 성능/품질 균형.
-const TOLERANCE = 36;       // 배경 유사도 임계값(0~255, 채널별 유클리드 거리). 클수록 더 많이 지움.
-const EDGE_FEATHER = true;  // 가장자리 살짝 부드럽게
+// TOLERANCE: LAB(ΔE 유사) 스케일로 재조정. RGB의 36과 달리 LAB는 ΔE 단위라 작게.
+// 일반 단색 배경 기준 ~14 전후가 적당(클수록 더 많이 지움). LAB용으로 14 선택.
+const TOLERANCE = 14;
+const EDGE_SAMPLES = 12;        // 각 변에서 뽑는 배경 색 샘플 개수(코너 포함). 배경 색 모델 크기.
+const FEATHER_PX = 1;           // 알파 경계 페더(블러) 반경(px). 1~2 권장.
+const MIN_BLOB_PX = 24;         // 이보다 작은 전경 연결성분(speck)은 제거.
+const HOLE_MAX_PX = Infinity;   // 전경에 완전히 둘러싸인 배경 구멍은 전부 메움(내부 안 뚫리게).
 const MIN_OBJECT_RATIO = 0.004; // 남은 객체가 이 비율보다 작으면 "검출 실패"로 간주
+
+// ---- 튜닝 상수 (물리) ----
+const PHYS_MAX_DIM = 110;   // 채집물 한 개의 화면상 최대 변(px). 큰 컷아웃이 화면 장악 방지.
+const PHYS_MIN_DIM = 40;    // 너무 작은 컷아웃도 최소 이 정도로 키워 충돌 안정화.
+const DROP_STAGGER_MS = 130;// 한 개씩 떨어뜨리는 간격(캐스케이드).
+const WALL_THICK = 80;      // 정적 벽/바닥 두께(px).
 
 // ---- DOM ----
 const video      = document.getElementById("video");
 const stage      = document.getElementById("stage");
 const reticleEl  = document.getElementById("reticle");
 const captureBtn = document.getElementById("captureBtn");
-const clearBtn   = document.getElementById("clearBtn");
-const tray        = document.getElementById("tray");
 const countEl    = document.getElementById("count");
 const flashEl    = document.getElementById("flash");
-const fxLayer    = document.getElementById("fxLayer");
 const overlay    = document.getElementById("overlay");
 const ovTitle    = document.getElementById("ovTitle");
 const ovMsg      = document.getElementById("ovMsg");
 const ovBtn      = document.getElementById("ovBtn");
+
+const invBtn       = document.getElementById("invBtn");
+const invBadge     = document.getElementById("invBadge");
+const inventoryEl  = document.getElementById("inventory");
+const invViewport  = document.getElementById("invViewport");
+const invCanvas    = document.getElementById("invCanvas");
+const invGrid      = document.getElementById("invGrid");
+const invEmpty     = document.getElementById("invEmpty");
+const invClearBtn  = document.getElementById("invClearBtn");
+const invCloseBtn  = document.getElementById("invCloseBtn");
+const invCountLabel= document.getElementById("invCountLabel");
 
 const prefersReducedMotion =
   window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -369,6 +451,9 @@ const prefersReducedMotion =
 let stream = null;
 let count = 0;
 let busy = false;
+
+// 채집물 저장소(메모리): { dataURL, w, h }  (w,h = 컷아웃 bbox 원본 픽셀 크기)
+const store = [];
 
 // ---- 오버레이 헬퍼 ----
 function showOverlay(title, msg, btnLabel, onClick) {
@@ -484,8 +569,40 @@ function getSourceCropRect() {
 }
 
 /* =========================================================
-   배경 제거: 모서리 시드 플러드필 (명시적 스택, 재귀 없음)
-   반환: { dataURL, width, height } 또는 null(검출 실패)
+   색공간: sRGB → 선형 → XYZ → LAB
+   ========================================================= */
+function srgbToLinear(c) {
+  c /= 255;
+  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+function labF(t) {
+  // CIE f()
+  return t > 0.008856451679035631 ? Math.cbrt(t) : (7.787037037037035 * t + 16 / 116);
+}
+// D65 white
+const LAB_XN = 0.95047, LAB_YN = 1.0, LAB_ZN = 1.08883;
+function rgbToLab(r, g, b) {
+  const rl = srgbToLinear(r), gl = srgbToLinear(g), bl = srgbToLinear(b);
+  // linear sRGB → XYZ (D65)
+  const X = rl * 0.4124564 + gl * 0.3575761 + bl * 0.1804375;
+  const Y = rl * 0.2126729 + gl * 0.7151522 + bl * 0.0721750;
+  const Z = rl * 0.0193339 + gl * 0.1191920 + bl * 0.9503041;
+  const fx = labF(X / LAB_XN);
+  const fy = labF(Y / LAB_YN);
+  const fz = labF(Z / LAB_ZN);
+  const L = 116 * fy - 16;
+  const A = 500 * (fx - fy);
+  const B = 200 * (fy - fz);
+  return [L, A, B];
+}
+
+/* =========================================================
+   배경 제거 파이프라인 (재귀 없음 — 모두 명시적 스택/큐)
+     1) 다중 에지 샘플로 배경 색 모델(LAB) 구성
+     2) 에지에서 안쪽으로 LAB 거리 플러드필 → 배경 마스크
+     3) 후처리: 구멍 메움 → 작은 전경 speck 제거 → 알파 페더
+     4) 전경 bbox 크롭 → 투명 PNG
+   반환: { dataURL, width, height, cxRatio, cyRatio } 또는 null
    ========================================================= */
 function removeBackground(srcCanvas) {
   const w = srcCanvas.width;
@@ -495,75 +612,128 @@ function removeBackground(srcCanvas) {
   const data = imgData.data;
   const N = w * h;
 
-  // visited / background 마킹
-  const bg = new Uint8Array(N); // 1 = 배경(투명 처리 대상)
-
-  // 네 모서리 색을 시드로
-  const cornerIdx = [
-    0,
-    (w - 1),
-    (h - 1) * w,
-    (h - 1) * w + (w - 1)
-  ];
-
-  const tol2 = TOLERANCE * TOLERANCE;
-
-  // 시드 색상 평균(코너 4개)
-  function colorAt(p) {
+  // --- LAB 룩업: 픽셀별 LAB 미리 계산(성능) ---
+  const labL = new Float32Array(N);
+  const labA = new Float32Array(N);
+  const labB = new Float32Array(N);
+  for (let p = 0; p < N; p++) {
     const i = p * 4;
-    return [data[i], data[i + 1], data[i + 2]];
+    const lab = rgbToLab(data[i], data[i + 1], data[i + 2]);
+    labL[p] = lab[0]; labA[p] = lab[1]; labB[p] = lab[2];
   }
 
-  // 명시적 스택 기반 플러드필. 각 시드의 색과 비교.
-  // 여러 시드를 모두 큐에 넣고, 인접 픽셀이 "그 시점 비교색"과 유사하면 확장.
-  const stack = new Int32Array(N);
-  let sp = 0;
-
-  // 시드 등록
-  for (const ci of cornerIdx) {
-    if (!bg[ci]) {
-      bg[ci] = 1;
-      stack[sp++] = ci;
-    }
+  // --- 1) 다중 에지 샘플 → 배경 색 모델 ---
+  const seedPts = [];
+  const samp = Math.max(2, EDGE_SAMPLES);
+  for (let s = 0; s < samp; s++) {
+    const fx = Math.round((w - 1) * (s / (samp - 1)));
+    const fy = Math.round((h - 1) * (s / (samp - 1)));
+    seedPts.push(fy * w + 0);          // 왼쪽 변
+    seedPts.push(fy * w + (w - 1));    // 오른쪽 변
+    seedPts.push(0 * w + fx);          // 위쪽 변
+    seedPts.push((h - 1) * w + fx);    // 아래쪽 변
   }
-
-  // 비교 기준색: 모서리 평균색 (단색 배경 가정)
-  let sr = 0, sg = 0, sb = 0;
-  for (const ci of cornerIdx) {
-    const c = colorAt(ci);
-    sr += c[0]; sg += c[1]; sb += c[2];
+  // 배경 LAB 모델(중복 제거는 비용 대비 의미 적어 그대로 둠)
+  const bgL = [], bgA = [], bgB = [];
+  for (const sp0 of seedPts) {
+    bgL.push(labL[sp0]); bgA.push(labA[sp0]); bgB.push(labB[sp0]);
   }
-  sr = sr / cornerIdx.length;
-  sg = sg / cornerIdx.length;
-  sb = sb / cornerIdx.length;
+  const M = bgL.length;
+  const tol2 = TOLERANCE * TOLERANCE; // LAB ΔE^2 임계
 
   function isBgColor(p) {
-    const i = p * 4;
-    const dr = data[i]     - sr;
-    const dg = data[i + 1] - sg;
-    const db = data[i + 2] - sb;
-    return (dr * dr + dg * dg + db * db) <= tol2;
+    const Lp = labL[p], Ap = labA[p], Bp = labB[p];
+    for (let k = 0; k < M; k++) {
+      const dL = Lp - bgL[k];
+      const dA = Ap - bgA[k];
+      const dB = Bp - bgB[k];
+      if (dL * dL + dA * dA + dB * dB <= tol2) return true;
+    }
+    return false;
   }
+
+  // --- 2) 에지에서 안쪽으로 플러드필 (명시적 스택) ---
+  const bg = new Uint8Array(N); // 1 = 배경
+  const stack = new Int32Array(N);
+  let sp = 0;
+  // 시드: 모든 에지 픽셀 중 배경색인 것
+  function trySeed(p) {
+    if (!bg[p] && isBgColor(p)) { bg[p] = 1; stack[sp++] = p; }
+  }
+  for (let x = 0; x < w; x++) { trySeed(x); trySeed((h - 1) * w + x); }
+  for (let y = 0; y < h; y++) { trySeed(y * w); trySeed(y * w + (w - 1)); }
 
   while (sp > 0) {
     const p = stack[--sp];
     const x = p % w;
     const y = (p - x) / w;
-
-    // 4방향 이웃
     if (x > 0)     { const q = p - 1; if (!bg[q] && isBgColor(q)) { bg[q] = 1; stack[sp++] = q; } }
     if (x < w - 1) { const q = p + 1; if (!bg[q] && isBgColor(q)) { bg[q] = 1; stack[sp++] = q; } }
     if (y > 0)     { const q = p - w; if (!bg[q] && isBgColor(q)) { bg[q] = 1; stack[sp++] = q; } }
     if (y < h - 1) { const q = p + w; if (!bg[q] && isBgColor(q)) { bg[q] = 1; stack[sp++] = q; } }
   }
 
-  // 배경 픽셀 투명화 + 객체 바운딩 박스 계산
-  let minX = w, minY = h, maxX = -1, maxY = -1;
-  let kept = 0;
+  // --- 3a) 구멍 메움: 에지에 연결된 배경만 "진짜 배경".
+  //         배경으로 분류됐지만 에지에서 도달 불가한 영역 = 내부 구멍 → 전경 복원.
+  //   reachable[p]=1 : 외부 배경에서 4방향으로 도달 가능한 배경.
+  const reachable = new Uint8Array(N);
+  let qp = 0;
+  const queue = stack; // 재사용
+  for (let x = 0; x < w; x++) {
+    let p = x;                 if (bg[p] && !reachable[p]) { reachable[p] = 1; queue[qp++] = p; }
+    p = (h - 1) * w + x;       if (bg[p] && !reachable[p]) { reachable[p] = 1; queue[qp++] = p; }
+  }
+  for (let y = 0; y < h; y++) {
+    let p = y * w;             if (bg[p] && !reachable[p]) { reachable[p] = 1; queue[qp++] = p; }
+    p = y * w + (w - 1);       if (bg[p] && !reachable[p]) { reachable[p] = 1; queue[qp++] = p; }
+  }
+  while (qp > 0) {
+    const p = queue[--qp];
+    const x = p % w;
+    const y = (p - x) / w;
+    if (x > 0)     { const q = p - 1; if (bg[q] && !reachable[q]) { reachable[q] = 1; queue[qp++] = q; } }
+    if (x < w - 1) { const q = p + 1; if (bg[q] && !reachable[q]) { reachable[q] = 1; queue[qp++] = q; } }
+    if (y > 0)     { const q = p - w; if (bg[q] && !reachable[q]) { reachable[q] = 1; queue[qp++] = q; } }
+    if (y < h - 1) { const q = p + w; if (bg[q] && !reachable[q]) { reachable[q] = 1; queue[qp++] = q; } }
+  }
+  // 도달 불가한 배경(=구멍)은 전경으로 되돌림
   for (let p = 0; p < N; p++) {
-    if (bg[p]) {
-      data[p * 4 + 3] = 0; // alpha 0
-    } else {
+    if (bg[p] && !reachable[p]) bg[p] = 0;
+  }
+
+  // --- 3b) 작은 전경 speck 제거: 전경 연결성분 라벨링(명시적 큐), 크기<MIN_BLOB_PX면 배경화 ---
+  const seen = new Uint8Array(N);
+  const comp = new Int32Array(N);
+  for (let start = 0; start < N; start++) {
+    if (bg[start] || seen[start]) continue;
+    // BFS
+    let cp = 0;
+    comp[cp++] = start;
+    seen[start] = 1;
+    let head = 0;
+    while (head < cp) {
+      const p = comp[head++];
+      const x = p % w;
+      const y = (p - x) / w;
+      if (x > 0)     { const q = p - 1; if (!bg[q] && !seen[q]) { seen[q] = 1; comp[cp++] = q; } }
+      if (x < w - 1) { const q = p + 1; if (!bg[q] && !seen[q]) { seen[q] = 1; comp[cp++] = q; } }
+      if (y > 0)     { const q = p - w; if (!bg[q] && !seen[q]) { seen[q] = 1; comp[cp++] = q; } }
+      if (y < h - 1) { const q = p + w; if (!bg[q] && !seen[q]) { seen[q] = 1; comp[cp++] = q; } }
+    }
+    if (cp < MIN_BLOB_PX) {
+      for (let k = 0; k < cp; k++) bg[comp[k]] = 1; // speck → 배경
+    }
+  }
+
+  // --- 알파 1차 설정: 배경=0, 전경=255 ---
+  for (let p = 0; p < N; p++) {
+    data[p * 4 + 3] = bg[p] ? 0 : 255;
+  }
+
+  // --- bbox 계산 + 전경 픽셀 수 ---
+  let minX = w, minY = h, maxX = -1, maxY = -1, kept = 0;
+  for (let p = 0; p < N; p++) {
+    if (!bg[p]) {
       kept++;
       const x = p % w;
       const y = (p - x) / w;
@@ -573,30 +743,19 @@ function removeBackground(srcCanvas) {
       if (y > maxY) maxY = y;
     }
   }
-
-  // 검출 실패 가드: 남은 게 거의 없음
+  // 검출 실패 가드
   if (maxX < 0 || kept < N * MIN_OBJECT_RATIO) {
     return null;
   }
 
-  // 가장자리 페더링: 배경에 인접한 객체 픽셀의 alpha를 약간 낮춤
-  if (EDGE_FEATHER) {
-    for (let p = 0; p < N; p++) {
-      if (bg[p]) continue;
-      const x = p % w;
-      const y = (p - x) / w;
-      let edge = false;
-      if (x > 0 && bg[p - 1]) edge = true;
-      else if (x < w - 1 && bg[p + 1]) edge = true;
-      else if (y > 0 && bg[p - w]) edge = true;
-      else if (y < h - 1 && bg[p + w]) edge = true;
-      if (edge) data[p * 4 + 3] = 150;
-    }
+  // --- 3c) 페더: 마스크 경계의 알파를 박스블러로 부드럽게 ---
+  if (FEATHER_PX > 0) {
+    featherAlpha(data, w, h, FEATHER_PX);
   }
 
   ctx.putImageData(imgData, 0, 0);
 
-  // 바운딩 박스로 크롭
+  // --- 4) bbox 크롭 → 투명 PNG ---
   const cw = maxX - minX + 1;
   const ch = maxY - minY + 1;
   const out = document.createElement("canvas");
@@ -609,14 +768,59 @@ function removeBackground(srcCanvas) {
     dataURL: out.toDataURL("image/png"),
     width: cw,
     height: ch,
-    // 화면상 객체 중심 보정을 위한 상대 위치(0~1) within processed canvas
     cxRatio: (minX + cw / 2) / w,
     cyRatio: (minY + ch / 2) / h
   };
 }
 
+/* 알파 채널만 박스블러(분리형). 경계가 0↔255 사이에서 부드러워짐. */
+function featherAlpha(data, w, h, radius) {
+  const N = w * h;
+  const a = new Float32Array(N);
+  for (let p = 0; p < N; p++) a[p] = data[p * 4 + 3];
+  const tmp = new Float32Array(N);
+  const win = radius * 2 + 1;
+
+  // 가로 패스
+  for (let y = 0; y < h; y++) {
+    const row = y * w;
+    let sum = 0;
+    for (let k = -radius; k <= radius; k++) {
+      const xx = Math.min(w - 1, Math.max(0, k));
+      sum += a[row + xx];
+    }
+    for (let x = 0; x < w; x++) {
+      tmp[row + x] = sum / win;
+      const xOut = x - radius;
+      const xIn = x + radius + 1;
+      sum -= a[row + Math.min(w - 1, Math.max(0, xOut))];
+      sum += a[row + Math.min(w - 1, Math.max(0, xIn))];
+    }
+  }
+  // 세로 패스
+  for (let x = 0; x < w; x++) {
+    let sum = 0;
+    for (let k = -radius; k <= radius; k++) {
+      const yy = Math.min(h - 1, Math.max(0, k));
+      sum += tmp[yy * w + x];
+    }
+    for (let y = 0; y < h; y++) {
+      a[y * w + x] = sum / win;
+      const yOut = y - radius;
+      const yIn = y + radius + 1;
+      sum -= tmp[Math.min(h - 1, Math.max(0, yOut)) * w + x];
+      sum += tmp[Math.min(h - 1, Math.max(0, yIn)) * w + x];
+    }
+  }
+  for (let p = 0; p < N; p++) {
+    let v = a[p];
+    if (v < 0) v = 0; else if (v > 255) v = 255;
+    data[p * 4 + 3] = v | 0;
+  }
+}
+
 /* =========================================================
-   채집 동작
+   채집 동작 — 메인 화면은 카메라만. 컷아웃은 store로 저장 + 배지/플래시만.
    ========================================================= */
 async function capture() {
   if (busy) return;
@@ -626,8 +830,7 @@ async function capture() {
 
   // 플래시
   flashEl.classList.remove("fire");
-  // 강제 리플로우로 애니메이션 재시작
-  void flashEl.offsetWidth;
+  void flashEl.offsetWidth; // 강제 리플로우로 애니메이션 재시작
   flashEl.classList.add("fire");
 
   try {
@@ -660,26 +863,20 @@ async function capture() {
     const result = removeBackground(proc);
 
     if (!result) {
-      // 검출 실패 안내(가벼운 토스트 대용: 카운터 흔들기)
-      bumpCounter(true);
+      bumpCounter(true); // 검출 실패: 카운터 흔들기
       busy = false;
       captureBtn.disabled = false;
       return;
     }
 
-    // 객체의 화면상 시작 위치(리티클 내 객체 중심)
-    const r = crop.screen;
-    const startCX = r.left + r.width  * result.cxRatio;
-    const startCY = r.top  + r.height * result.cyRatio;
+    // store에 저장 (bbox 원본 크기)
+    store.push({ dataURL: result.dataURL, w: result.width, h: result.height });
 
-    await dropCutout(result.dataURL, result.width, result.height, startCX, startCY);
-
-    addToTray(result.dataURL);
     count++;
     countEl.textContent = count;
+    updateInvBadge(true);
     bumpCounter(false);
   } catch (e) {
-    // 안전: 실패해도 앱은 살아있게
     console.error(e);
   } finally {
     busy = false;
@@ -694,102 +891,236 @@ function bumpCounter(isFail) {
   setTimeout(() => { el.style.transform = "none"; }, 130);
 }
 
-/* 떨어지는 컷아웃 애니메이션: 객체 위치 → 트레이 */
-function dropCutout(dataURL, natW, natH, startCX, startCY) {
-  return new Promise((resolve) => {
-    // 표시 크기: 화면에서 적당히 (긴 변 ~120px)
-    const aspect = natW / natH;
-    let dw, dh;
-    if (aspect >= 1) { dw = 120; dh = 120 / aspect; }
-    else { dh = 120; dw = 120 * aspect; }
+function updateInvBadge(animate) {
+  invBadge.textContent = String(store.length);
+  if (animate && !prefersReducedMotion) {
+    invBadge.classList.remove("bump");
+    void invBadge.offsetWidth;
+    invBadge.classList.add("bump");
+  }
+}
 
-    const sprite = document.createElement("div");
-    sprite.className = "sprite";
-    sprite.style.width = dw + "px";
-    sprite.style.height = dh + "px";
-    sprite.style.left = (startCX - dw / 2) + "px";
-    sprite.style.top  = (startCY - dh / 2) + "px";
+/* =========================================================
+   채집물 오버레이 — Matter.js 중력 물리(겹침 없는 적층)
+   폴백: prefers-reduced-motion 또는 Matter 미정의 → 정적 그리드
+   ========================================================= */
+const Phys = {
+  engine: null,
+  runner: null,
+  render: null,
+  orientHandler: null,
+  open: false
+};
+
+function physicsAvailable() {
+  return typeof window.Matter !== "undefined" && !prefersReducedMotion;
+}
+
+function openInventory() {
+  if (Phys.open) return;
+  Phys.open = true;
+  inventoryEl.classList.add("show");
+  invCountLabel.textContent = store.length + "개";
+
+  const empty = store.length === 0;
+  invEmpty.classList.toggle("show", empty);
+
+  if (empty) {
+    invGrid.classList.remove("show");
+    invCanvas.style.display = "none";
+    return;
+  }
+
+  if (physicsAvailable()) {
+    invCanvas.style.display = "block";
+    invGrid.classList.remove("show");
+    // 레이아웃 확정 후 빌드
+    requestAnimationFrame(() => buildPhysics());
+  } else {
+    invCanvas.style.display = "none";
+    buildGrid();
+  }
+}
+
+function closeInventory() {
+  if (!Phys.open) return;
+  Phys.open = false;
+  inventoryEl.classList.remove("show");
+  teardownPhysics();
+  invGrid.classList.remove("show");
+  invGrid.innerHTML = "";
+}
+
+/* 폴백 정적 그리드 */
+function buildGrid() {
+  invGrid.innerHTML = "";
+  for (const it of store) {
+    const cell = document.createElement("div");
+    cell.className = "gridItem";
     const img = document.createElement("img");
-    img.src = dataURL;
-    sprite.appendChild(img);
-    fxLayer.appendChild(sprite);
+    img.src = it.dataURL;
+    cell.appendChild(img);
+    invGrid.appendChild(cell);
+  }
+  invGrid.classList.add("show");
+}
 
-    // 목표: 트레이 영역 위쪽 가운데 근처
-    const trayRect = tray.getBoundingClientRect();
-    const stageRect = stage.getBoundingClientRect();
-    const targetX = trayRect.left + trayRect.width * (0.2 + Math.random() * 0.6) - stageRect.left;
-    const targetY = trayRect.top - stageRect.top - dh * 0.2;
+/* Matter.js 물리 파일 빌드 */
+function buildPhysics() {
+  if (!Phys.open) return;
+  const M = window.Matter;
+  const { Engine, Render, Runner, Bodies, Composite, Body } = M;
 
-    const fromX = parseFloat(sprite.style.left);
-    const fromY = parseFloat(sprite.style.top);
-    const dx = targetX - fromX;
-    const dy = targetY - fromY;
+  const vw = invViewport.clientWidth;
+  const vh = invViewport.clientHeight;
+  if (vw < 2 || vh < 2) return;
 
-    if (prefersReducedMotion) {
-      sprite.remove();
-      resolve();
-      return;
+  const dpr = window.devicePixelRatio || 1;
+
+  const engine = Engine.create();
+  engine.gravity.y = 1;
+  engine.gravity.x = 0;
+
+  const render = Render.create({
+    canvas: invCanvas,
+    engine: engine,
+    options: {
+      width: vw,
+      height: vh,
+      pixelRatio: dpr,
+      wireframes: false,
+      background: "transparent"
     }
-
-    // 두 단계: 살짝 떠오름 → 바운스하며 낙하
-    const dur = 620;
-    const start = performance.now();
-
-    function easeOutBounce(t) {
-      const n1 = 7.5625, d1 = 2.75;
-      if (t < 1 / d1) return n1 * t * t;
-      else if (t < 2 / d1) { t -= 1.5 / d1; return n1 * t * t + 0.75; }
-      else if (t < 2.5 / d1) { t -= 2.25 / d1; return n1 * t * t + 0.9375; }
-      else { t -= 2.625 / d1; return n1 * t * t + 0.984375; }
-    }
-
-    function frame(now) {
-      const t = Math.min(1, (now - start) / dur);
-      const ex = t; // x 선형
-      const ey = easeOutBounce(t);
-      const curX = dx * ex;
-      const curY = dy * ey;
-      const rot = (1 - t) * 14 * (dx >= 0 ? 1 : -1);
-      const scale = 1 - 0.35 * t;
-      sprite.style.transform =
-        "translate(" + curX + "px," + curY + "px) rotate(" + rot + "deg) scale(" + scale + ")";
-      sprite.style.opacity = t > 0.85 ? String(1 - (t - 0.85) / 0.15) : "1";
-      if (t < 1) {
-        requestAnimationFrame(frame);
-      } else {
-        sprite.remove();
-        resolve();
-      }
-    }
-    requestAnimationFrame(frame);
   });
+
+  // 정적 경계: 바닥 + 좌/우 벽 + 천장
+  const wallOpts = { isStatic: true, restitution: 0.2, friction: 0.6, render: { visible: false } };
+  const floor = Bodies.rectangle(vw / 2, vh + WALL_THICK / 2, vw + WALL_THICK * 2, WALL_THICK, wallOpts);
+  const left  = Bodies.rectangle(-WALL_THICK / 2, vh / 2, WALL_THICK, vh * 2, wallOpts);
+  const right = Bodies.rectangle(vw + WALL_THICK / 2, vh / 2, WALL_THICK, vh * 2, wallOpts);
+  const ceil  = Bodies.rectangle(vw / 2, -vh - WALL_THICK / 2, vw + WALL_THICK * 2, WALL_THICK, wallOpts);
+  Composite.add(engine.world, [floor, left, right, ceil]);
+
+  Phys.engine = engine;
+  Phys.render = render;
+  Render.run(render);
+  const runner = Runner.create();
+  Runner.run(runner, engine);
+  Phys.runner = runner;
+
+  // 컷아웃을 하나씩 staggered 드롭
+  const drops = store.slice();
+  let i = 0;
+  function dropNext() {
+    if (!Phys.open || Phys.engine !== engine) return; // 닫혔거나 재빌드됨
+    if (i >= drops.length) return;
+    const it = drops[i++];
+
+    // 화면 표시 크기(최대/최소 캡) — 텍스처 스케일 계산
+    const natMax = Math.max(it.w, it.h) || 1;
+    let scale = PHYS_MAX_DIM / natMax;
+    const minNat = Math.min(it.w, it.h) || 1;
+    if (minNat * scale < PHYS_MIN_DIM) scale = PHYS_MIN_DIM / minNat;
+    const bw = Math.max(8, it.w * scale);
+    const bh = Math.max(8, it.h * scale);
+
+    // 스프라이트 텍스처 스케일: 바디 bbox에 PNG가 딱 맞도록
+    const xScale = bw / it.w;
+    const yScale = bh / it.h;
+
+    const x = bw / 2 + Math.random() * Math.max(1, (vw - bw));
+    const y = -bh - Math.random() * 40;
+
+    const body = Bodies.rectangle(x, y, bw, bh, {
+      restitution: 0.2,
+      friction: 0.6,
+      frictionAir: 0.01,
+      render: {
+        sprite: { texture: it.dataURL, xScale: xScale, yScale: yScale }
+      }
+    });
+    Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.1);
+    Composite.add(engine.world, body);
+
+    if (i < drops.length) {
+      setTimeout(dropNext, DROP_STAGGER_MS);
+    }
+  }
+  dropNext();
+
+  // OPTIONAL: deviceorientation → 중력 방향 기울이기 (미지원/권한없음 시 조용히 스킵)
+  try {
+    if (typeof window.DeviceOrientationEvent !== "undefined" &&
+        typeof window.DeviceOrientationEvent.requestPermission !== "function") {
+      // iOS 권한 프롬프트가 필요한 경우는 자동 요청하지 않고 스킵(제스처 정책)
+      const handler = (e) => {
+        if (!Phys.engine || Phys.engine !== engine) return;
+        const g = e.gamma; // 좌우 기울기 (-90..90)
+        const b = e.beta;  // 앞뒤 기울기 (-180..180)
+        if (g == null || b == null) return;
+        engine.gravity.x = Math.max(-1, Math.min(1, g / 45));
+        engine.gravity.y = Math.max(-1, Math.min(1, Math.max(0.2, b / 45)));
+      };
+      window.addEventListener("deviceorientation", handler);
+      Phys.orientHandler = handler;
+    }
+  } catch (_) { /* 조용히 무시 */ }
 }
 
-function addToTray(dataURL) {
-  const item = document.createElement("div");
-  item.className = "item pop";
-  const img = document.createElement("img");
-  img.src = dataURL;
-  item.appendChild(img);
-  tray.appendChild(item);
-  // 새 항목으로 스크롤
-  tray.scrollTop = tray.scrollHeight;
-  item.addEventListener("animationend", () => item.classList.remove("pop"), { once: true });
+/* 물리 정리 — 누수/중복 러너 방지 */
+function teardownPhysics() {
+  const M = window.Matter;
+  if (Phys.orientHandler) {
+    window.removeEventListener("deviceorientation", Phys.orientHandler);
+    Phys.orientHandler = null;
+  }
+  if (M) {
+    if (Phys.render) {
+      M.Render.stop(Phys.render);
+      if (Phys.render.context && Phys.render.canvas) {
+        // 캔버스 비우기(텍스처 메모리 해제 유도)
+        const c = Phys.render.canvas;
+        const cx = c.getContext("2d");
+        if (cx) cx.clearRect(0, 0, c.width, c.height);
+      }
+      Phys.render.textures = {};
+    }
+    if (Phys.runner) M.Runner.stop(Phys.runner);
+    if (Phys.engine) {
+      M.Composite.clear(Phys.engine.world, false);
+      M.Engine.clear(Phys.engine);
+    }
+  }
+  Phys.render = null;
+  Phys.runner = null;
+  Phys.engine = null;
 }
 
-function clearTray() {
-  tray.innerHTML = "";
+/* 비우기 */
+function clearStore() {
+  store.length = 0;
   count = 0;
   countEl.textContent = "0";
+  updateInvBadge(false);
+  invCountLabel.textContent = "0개";
+  // 열려있으면 즉시 반영
+  if (Phys.open) {
+    teardownPhysics();
+    invGrid.classList.remove("show");
+    invGrid.innerHTML = "";
+    invCanvas.style.display = "none";
+    invEmpty.classList.add("show");
+  }
 }
 
 // ---- 이벤트 ----
 captureBtn.addEventListener("click", capture);
-clearBtn.addEventListener("click", clearTray);
+invBtn.addEventListener("click", openInventory);
+invCloseBtn.addEventListener("click", closeInventory);
+invClearBtn.addEventListener("click", clearStore);
 
 // 화면 탭(컨트롤 외 영역)으로도 채집 가능하게 — 편의
 stage.addEventListener("click", (e) => {
-  // 비디오 영역 직접 탭 시
   if (e.target === video || e.target === stage) capture();
 });
 
@@ -801,6 +1132,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 // 시작
+updateInvBadge(false);
 startCamera();
 </script>
 </body>
