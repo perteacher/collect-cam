@@ -160,7 +160,22 @@
     background: linear-gradient(180deg, rgba(14,15,19,0.0), rgba(14,15,19,0.9) 40%, var(--bg));
   }
 
-  #spacerLeft { width: 64px; height: 64px; flex: 0 0 auto; }
+  /* 사진 가져오기 button — bottom-left, mirrors #invBtn */
+  #photoBtn {
+    flex: 0 0 auto;
+    width: 64px; height: 64px;
+    border-radius: 16px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #photoBtn:active { background: #262a35; }
 
   /* Capture button */
   #captureBtn {
@@ -514,11 +529,6 @@
     gap: 10px;
   }
   #loader.show { display: flex; }
-  #loader #loaderSkip {
-    border: 0; border-radius: 999px; padding: 6px 12px;
-    background: var(--accent); color: #0b0b0c;
-    font-weight: 800; font-size: 12px; cursor: pointer; display: none;
-  }
   #loader .spin {
     width: 16px; height: 16px;
     border: 2px solid rgba(255,255,255,0.25);
@@ -573,7 +583,7 @@
   </div>
 
   <div id="controls">
-    <div id="spacerLeft"></div>
+    <button id="photoBtn" title="사진 가져오기">사진</button>
     <button id="captureBtn">채집</button>
     <button id="invBtn" title="채집 도감">
       도감
@@ -587,8 +597,10 @@
   <div id="invHeader">
     <div id="invTitle">채집 도감 <small id="invCountLabel">0개</small></div>
     <div class="btns">
-      <button id="invExportBtn" title="내보내기">내보내기</button>
-      <button id="invImportBtn" title="가져오기">가져오기</button>
+      <button id="invPhotoBtn" title="사진 가져오기">사진</button>
+      <button id="invClearBtn" title="전체 삭제">비우기</button>
+      <button id="invExportBtn" title="백업 내보내기">백업저장</button>
+      <button id="invImportBtn" title="백업 불러오기">백업열기</button>
       <button id="invCloseBtn" title="닫기">닫기</button>
     </div>
   </div>
@@ -627,25 +639,22 @@
   </div>
 </div>
 
-<!-- 정보 입력 화면 -->
-<div id="infoSheet" class="sheet">
+<!-- 상세 화면 (정보 입력/수정도 여기서) -->
+<div id="detailSheet" class="sheet">
   <div class="sheetHead">
-    <h2 id="infoTitle">정보 입력</h2>
+    <h2 id="detailTitle">채집물</h2>
+    <button id="detailCloseBtn" class="btn small ghost">닫기</button>
   </div>
   <div class="sheetBody">
     <div class="form">
-      <div class="preview"><img id="infoPreview" alt="" /></div>
-      <div class="field" id="fName">
-        <label>이름<span class="req">*필수</span></label>
-        <input id="inName" type="text" inputmode="text" placeholder="예: 민들레, 무당벌레" maxlength="40" />
-        <div class="err">이름을 적어 주세요.</div>
+      <div class="preview"><img id="detailImg" alt="" /></div>
+      <div class="field">
+        <label>이름</label>
+        <input id="inName" type="text" inputmode="text" placeholder="예: 민들레, 무당벌레 (비워도 돼요)" maxlength="40" />
       </div>
       <div class="field">
         <label>채집 장소</label>
-        <div class="locRow">
-          <input id="inPlace" type="text" placeholder="예: 학교 화단" maxlength="80" />
-          <button id="geoBtn" type="button">현재 위치</button>
-        </div>
+        <input id="inPlace" type="text" placeholder="예: 학교 화단" maxlength="80" />
       </div>
       <div class="field">
         <label>설명 / 메모</label>
@@ -657,33 +666,10 @@
       </div>
     </div>
   </div>
-  <div class="sheetFoot">
-    <button id="infoCancelBtn" class="btn ghost">취소</button>
-    <button id="infoSaveBtn" class="btn primary">저장</button>
-  </div>
-</div>
-
-<!-- 상세 화면 -->
-<div id="detailSheet" class="sheet">
-  <div class="sheetHead">
-    <h2>채집물</h2>
-    <button id="detailCloseBtn" class="btn small ghost">닫기</button>
-  </div>
-  <div class="sheetBody">
-    <div class="form" style="gap:10px;">
-      <div class="preview"><img id="detailImg" alt="" /></div>
-    </div>
-    <div class="detailMeta" id="detailView">
-      <div class="mrow"><span class="k">이름</span><span class="v" id="dvName"></span></div>
-      <div class="mrow"><span class="k">장소</span><span class="v" id="dvPlace"></span></div>
-      <div class="mrow"><span class="k">설명</span><span class="v" id="dvNote"></span></div>
-      <div class="mrow"><span class="k">날짜</span><span class="v" id="dvDate"></span></div>
-    </div>
-  </div>
   <div class="sheetFoot" style="flex-wrap:wrap;">
     <button id="detailEditMaskBtn" class="btn">누끼 다시 다듬기</button>
-    <button id="detailEditInfoBtn" class="btn">정보 수정</button>
     <button id="detailDeleteBtn" class="btn danger">삭제</button>
+    <button id="detailSaveBtn" class="btn primary">저장</button>
   </div>
 </div>
 
@@ -696,9 +682,10 @@
   </div>
 </div>
 
-<div id="loader"><span class="spin"></span><span id="loaderMsg">배경 지우는 중…</span><button id="loaderSkip" type="button">빠르게 건너뛰기</button></div>
+<div id="loader"><span class="spin"></span><span id="loaderMsg">배경 지우는 중…</span></div>
 <div id="toast"></div>
 <input id="importFile" type="file" accept="application/json,.json" style="display:none" />
+<input id="photoFile" type="file" accept="image/*" style="display:none" />
 
 <!-- Matter.js (physics) — pinned version, CDN. Fallback to static grid if blocked. -->
 <script src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js"></script>
@@ -707,9 +694,10 @@
 
 /* =========================================================
    학생용 동식물 채집 도감 — 단일 파일 바닐라 웹앱
-   - 채집(카메라) → 자동 누끼(@imgly, 실패시 플러드필 폴백) → 수동 누끼 편집 → 정보 입력 → 저장
+   - 채집(카메라) 또는 사진 가져오기 → 자동 누끼(플러드필) → 수동 누끼 편집 → 바로 저장
+   - 정보(이름/장소/메모/날짜)는 상세 화면에서 입력/수정
    - 도감(채집물): Matter.js 중력 물리 + 드래그(MouseConstraint), 탭 → 상세, 폴백=정적 그리드
-   - localStorage 자동 저장, JSON 내보내기/가져오기
+   - localStorage 자동 저장, 백업(JSON) 내보내기/불러오기, 사진 가져오기(갤러리)
    ========================================================= */
 
 // ---- 튜닝 상수 (배경 제거: 폴백 플러드필) ----
@@ -744,6 +732,7 @@ const ovTitle    = document.getElementById("ovTitle");
 const ovMsg      = document.getElementById("ovMsg");
 const ovBtn      = document.getElementById("ovBtn");
 
+const photoBtn     = document.getElementById("photoBtn");
 const invBtn       = document.getElementById("invBtn");
 const invBadge     = document.getElementById("invBadge");
 const inventoryEl  = document.getElementById("inventory");
@@ -752,14 +741,16 @@ const invCanvas    = document.getElementById("invCanvas");
 const invGrid      = document.getElementById("invGrid");
 const invEmpty     = document.getElementById("invEmpty");
 const invCloseBtn  = document.getElementById("invCloseBtn");
+const invPhotoBtn  = document.getElementById("invPhotoBtn");
+const invClearBtn  = document.getElementById("invClearBtn");
 const invExportBtn = document.getElementById("invExportBtn");
 const invImportBtn = document.getElementById("invImportBtn");
 const invCountLabel= document.getElementById("invCountLabel");
 const importFile   = document.getElementById("importFile");
+const photoFile    = document.getElementById("photoFile");
 
 const loaderEl   = document.getElementById("loader");
 const loaderMsg  = document.getElementById("loaderMsg");
-const loaderSkip = document.getElementById("loaderSkip");
 const toastEl    = document.getElementById("toast");
 
 // editor DOM
@@ -773,30 +764,18 @@ const editUndoBtn  = document.getElementById("editUndoBtn");
 const editCancelBtn= document.getElementById("editCancelBtn");
 const editDoneBtn  = document.getElementById("editDoneBtn");
 
-// info DOM
-const infoSheet    = document.getElementById("infoSheet");
-const infoTitle    = document.getElementById("infoTitle");
-const infoPreview  = document.getElementById("infoPreview");
+// detail DOM (정보 입력/수정 포함)
+const detailSheet  = document.getElementById("detailSheet");
+const detailTitle  = document.getElementById("detailTitle");
+const detailImg    = document.getElementById("detailImg");
 const inName       = document.getElementById("inName");
 const inPlace      = document.getElementById("inPlace");
 const inNote       = document.getElementById("inNote");
 const inDate       = document.getElementById("inDate");
-const fName        = document.getElementById("fName");
-const geoBtn       = document.getElementById("geoBtn");
-const infoCancelBtn= document.getElementById("infoCancelBtn");
-const infoSaveBtn  = document.getElementById("infoSaveBtn");
-
-// detail DOM
-const detailSheet  = document.getElementById("detailSheet");
-const detailImg    = document.getElementById("detailImg");
-const dvName       = document.getElementById("dvName");
-const dvPlace      = document.getElementById("dvPlace");
-const dvNote       = document.getElementById("dvNote");
-const dvDate       = document.getElementById("dvDate");
 const detailCloseBtn   = document.getElementById("detailCloseBtn");
 const detailEditMaskBtn= document.getElementById("detailEditMaskBtn");
-const detailEditInfoBtn= document.getElementById("detailEditInfoBtn");
 const detailDeleteBtn  = document.getElementById("detailDeleteBtn");
+const detailSaveBtn    = document.getElementById("detailSaveBtn");
 
 const prefersReducedMotion =
   window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -822,12 +801,11 @@ function toast(msg, ms) {
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toastEl.classList.remove("show"), ms || 3200);
 }
-function showLoader(msg, showSkip) {
+function showLoader(msg) {
   loaderMsg.textContent = msg || "처리 중…";
-  loaderSkip.style.display = showSkip ? "inline-block" : "none";
   loaderEl.classList.add("show");
 }
-function hideLoader() { loaderEl.classList.remove("show"); loaderSkip.style.display = "none"; loaderSkip.onclick = null; }
+function hideLoader() { loaderEl.classList.remove("show"); }
 
 // ---- 오버레이 헬퍼 ----
 function showOverlay(title, msg, btnLabel, onClick) {
@@ -1136,89 +1114,6 @@ function featherAlphaArray(alpha, w, h, radius) {
   }
 }
 
-/* =========================================================
-   @imgly 자동 누끼 — 모듈 1회 로드 후 캐시. 실패시 null.
-   removeBackground(blob) → PNG Blob(전경, 투명). 알파만 추출해 마스크화.
-   ========================================================= */
-let imglyModPromise = null;
-function loadImgly() {
-  if (imglyModPromise) return imglyModPromise;
-  imglyModPromise = (async () => {
-    const mod = await import("https://esm.sh/@imgly/background-removal@1.5.5");
-    // 기본 내보내기(default) = removeBackground. 명명 내보내기도 방어적으로 시도.
-    const fn = mod.default || mod.removeBackground;
-    if (typeof fn !== "function") throw new Error("removeBackground not found");
-    return fn;
-  })();
-  // 실패하면 다음 시도 때 재로드 가능하도록 promise 캐시 해제
-  imglyModPromise.catch(() => { imglyModPromise = null; });
-  return imglyModPromise;
-}
-
-function canvasToBlob(canvas, type, q) {
-  return new Promise((res) => {
-    if (canvas.toBlob) canvas.toBlob((b) => res(b), type, q);
-    else res(null);
-  });
-}
-
-/* @imgly 결과 → 알파 마스크(Uint8Array, N). 실패시 null. 타임아웃 가드. */
-async function imglyMask(srcCanvas) {
-  const w = srcCanvas.width, h = srcCanvas.height;
-  let removeBg;
-  try {
-    removeBg = await withTimeout(loadImgly(), 8000);
-  } catch (e) { return null; }
-
-  let resultBlob;
-  try {
-    const inBlob = await canvasToBlob(srcCanvas, "image/png");
-    if (!inBlob) return null;
-    resultBlob = await withTimeout(
-      removeBg(inBlob, { output: { format: "image/png" } }),
-      15000
-    );
-  } catch (e) { return null; }
-  if (!resultBlob) return null;
-
-  // PNG Blob → 동일 크기 캔버스에 그려 알파 추출
-  try {
-    const bmp = await blobToImage(resultBlob);
-    const c = document.createElement("canvas");
-    c.width = w; c.height = h;
-    const cx = c.getContext("2d", { willReadFrequently: true });
-    cx.clearRect(0, 0, w, h);
-    cx.drawImage(bmp, 0, 0, w, h);
-    const d = cx.getImageData(0, 0, w, h).data;
-    const N = w * h;
-    const alpha = new Uint8Array(N);
-    let kept = 0;
-    for (let p = 0; p < N; p++) {
-      const a = d[p * 4 + 3];
-      alpha[p] = a;
-      if (a > 16) kept++;
-    }
-    if (kept < N * MIN_OBJECT_RATIO) return null;
-    return { alpha, w, h };
-  } catch (e) { return null; }
-}
-
-function withTimeout(promise, ms) {
-  return new Promise((resolve, reject) => {
-    const t = setTimeout(() => reject(new Error("timeout")), ms);
-    promise.then((v) => { clearTimeout(t); resolve(v); },
-                 (e) => { clearTimeout(t); reject(e); });
-  });
-}
-function blobToImage(blob) {
-  return new Promise((res, rej) => {
-    const url = URL.createObjectURL(blob);
-    const img = new Image();
-    img.onload = () => { URL.revokeObjectURL(url); res(img); };
-    img.onerror = (e) => { URL.revokeObjectURL(url); rej(e); };
-    img.src = url;
-  });
-}
 function dataURLToImage(dataURL) {
   return new Promise((res, rej) => {
     const img = new Image();
@@ -1229,7 +1124,7 @@ function dataURLToImage(dataURL) {
 }
 
 /* =========================================================
-   채집 동작 — 스냅샷 → 자동 누끼 시도 → 누끼 편집기 → 정보 입력
+   채집 동작 — 스냅샷 → 자동 누끼(플러드필) → 누끼 편집기 → 바로 저장
    ========================================================= */
 async function capture() {
   if (busy) return;
@@ -1272,40 +1167,18 @@ async function capture() {
     originalCanvas.width = pw; originalCanvas.height = ph;
     originalCanvas.getContext("2d").drawImage(proc, 0, 0);
 
-    // 1) @imgly 자동 누끼 시도 → 실패시 폴백 플러드필
-    showLoader("정밀하게 배경 지우는 중… (안 되면 자동 전환)", true);
+    // 1) 자동 누끼 = 플러드필(빠름, 동기)
     let maskInfo = null;
-    try {
-      // 모델 시도를 "건너뛰기" 버튼과 경쟁 — 학생이 느린 망에서 기다리지 않게
-      const skipP = new Promise((res) => { loaderSkip.onclick = () => res("__SKIP__"); });
-      const r = await Promise.race([imglyMask(proc), skipP]);
-      maskInfo = (r === "__SKIP__") ? null : r;
-    } catch (e) { maskInfo = null; }
-    loaderSkip.onclick = null;
-    if (!maskInfo) {
-      // 폴백: 플러드필 (proc는 imgly 입력 후에도 픽셀 데이터 보존됨)
-      try { maskInfo = heuristicMask(proc); } catch (e) { maskInfo = null; }
-    }
-    hideLoader();
+    try { maskInfo = heuristicMask(proc); } catch (e) { maskInfo = null; }
 
     // 2) 마스크 캔버스 구성 (없으면 전체 불투명으로 시작 — 사용자가 손으로 지움)
-    const maskCanvas = document.createElement("canvas");
-    maskCanvas.width = pw; maskCanvas.height = ph;
-    const mctx = maskCanvas.getContext("2d");
-    if (maskInfo) {
-      writeAlphaToMaskCanvas(maskCanvas, maskInfo.alpha, pw, ph);
-    } else {
-      // 검출 실패 → 전부 보이게(사용자가 다듬도록)
-      mctx.fillStyle = "#fff";
-      mctx.fillRect(0, 0, pw, ph);
-      toast("자동 배경 제거가 잘 안 됐어요. 손으로 다듬어 주세요.");
-    }
+    const maskCanvas = buildMaskCanvas(maskInfo, pw, ph);
 
-    // 3) 누끼 편집기 진입 → 완료시 정보 입력
+    // 3) 누끼 편집기 진입 → 완료시 바로 저장
     busy = false;
     captureBtn.disabled = false;
     openMaskEditor(originalCanvas, maskCanvas, (finalOriginal, finalMask) => {
-      openInfoInput(finalOriginal, finalMask, null);
+      saveNewItem(finalOriginal, finalMask);
     });
   } catch (e) {
     console.error(e);
@@ -1326,6 +1199,98 @@ function writeAlphaToMaskCanvas(maskCanvas, alpha, w, h) {
     d[p * 4] = a; d[p * 4 + 1] = a; d[p * 4 + 2] = a; d[p * 4 + 3] = 255;
   }
   ctx.putImageData(img, 0, 0);
+}
+
+/* maskInfo(또는 null) → 마스크 캔버스. null이면 전체 흰색(전부 보이게). */
+function buildMaskCanvas(maskInfo, w, h) {
+  const maskCanvas = document.createElement("canvas");
+  maskCanvas.width = w; maskCanvas.height = h;
+  if (maskInfo) {
+    writeAlphaToMaskCanvas(maskCanvas, maskInfo.alpha, w, h);
+  } else {
+    const mctx = maskCanvas.getContext("2d");
+    mctx.fillStyle = "#fff";
+    mctx.fillRect(0, 0, w, h);
+    toast("자동 배경 제거가 잘 안 됐어요. 손으로 다듬어 주세요.");
+  }
+  return maskCanvas;
+}
+
+/* 누끼 편집 완료 → 정보 없이 바로 도감에 저장. (이름/장소/메모는 상세에서 입력) */
+function saveNewItem(originalCanvas, maskCanvas) {
+  const cut = composeCutout(originalCanvas, maskCanvas);
+  const it = {
+    id: nextId++,
+    image: cut.dataURL,
+    original: originalCanvas.toDataURL("image/jpeg", JPEG_Q),
+    mask: maskCanvas.toDataURL("image/png"),
+    name: "",
+    location: "",
+    note: "",
+    date: todayStr(),
+    createdAt: Date.now()
+  };
+  store.push(it);
+  ensureNat(it);
+  const ok = persist();
+  if (ok) {
+    updateInvBadge(true);
+    bumpCounter(false);
+    toast("도감에 담았어요");
+  }
+  if (Phys.open) refreshInventoryView();
+}
+
+/* 사진 가져오기(갤러리) → proc 캔버스(≤MAX_DIM, 전체 이미지) → 누끼 편집 → 저장 */
+function importPhotoFile(file) {
+  if (!file || !/^image\//.test(file.type || "")) {
+    toast("이미지 파일을 골라 주세요.");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const iw = img.naturalWidth || img.width;
+        const ih = img.naturalHeight || img.height;
+        if (!iw || !ih) { toast("사진을 열지 못했어요."); return; }
+        // 긴 변을 MAX_DIM 이하로(가로세로 비율 유지)
+        let pw, ph;
+        if (iw >= ih) {
+          pw = Math.min(MAX_DIM, iw);
+          ph = Math.max(1, Math.round(pw * ih / iw));
+        } else {
+          ph = Math.min(MAX_DIM, ih);
+          pw = Math.max(1, Math.round(ph * iw / ih));
+        }
+        const proc = document.createElement("canvas");
+        proc.width = pw; proc.height = ph;
+        proc.getContext("2d", { willReadFrequently: true }).drawImage(img, 0, 0, pw, ph);
+
+        const originalCanvas = document.createElement("canvas");
+        originalCanvas.width = pw; originalCanvas.height = ph;
+        originalCanvas.getContext("2d").drawImage(proc, 0, 0);
+
+        let maskInfo = null;
+        try { maskInfo = heuristicMask(proc); } catch (e) { maskInfo = null; }
+        const maskCanvas = buildMaskCanvas(maskInfo, pw, ph);
+
+        // 도감이 열려 있으면 편집기 위에 가리므로 닫아 둠
+        if (Phys.open) closeInventory();
+        openMaskEditor(originalCanvas, maskCanvas, (finalOriginal, finalMask) => {
+          saveNewItem(finalOriginal, finalMask);
+        });
+      } catch (e) {
+        console.error(e);
+        toast("사진이 너무 크거나 열 수 없어요.");
+      }
+    };
+    img.onerror = () => toast("사진을 열지 못했어요.");
+    img.src = String(reader.result);
+  };
+  reader.onerror = () => toast("사진을 읽지 못했어요.");
+  reader.readAsDataURL(file);
 }
 
 function bumpCounter(isFail) {
@@ -1711,39 +1676,6 @@ editDoneBtn.addEventListener("click", () => {
   if (cb) cb(orig, mask);
 });
 
-/* =========================================================
-   정보 입력 화면
-   mode: editingItem(null=신규) 있으면 수정.
-   pendingOriginal/Mask = 신규/재누끼 시 합성에 쓸 캔버스
-   ========================================================= */
-let infoCtx = null; // { original, mask, item }
-function openInfoInput(originalCanvas, maskCanvas, existingItem) {
-  infoCtx = { original: originalCanvas, mask: maskCanvas, item: existingItem };
-  infoTitle.textContent = existingItem ? "정보 수정" : "정보 입력";
-
-  // 미리보기(합성 컷아웃)
-  const cut = composeCutout(originalCanvas, maskCanvas);
-  infoCtx.cutout = cut;
-  infoPreview.src = cut.dataURL;
-
-  // 필드 채우기
-  if (existingItem) {
-    inName.value = existingItem.name || "";
-    inPlace.value = existingItem.location || "";
-    inNote.value = existingItem.note || "";
-    inDate.value = existingItem.date || todayStr();
-  } else {
-    inName.value = "";
-    inPlace.value = "";
-    inNote.value = "";
-    inDate.value = todayStr();
-  }
-  fName.classList.remove("invalid");
-  infoSheet.classList.add("show");
-  setTimeout(() => { try { inName.focus(); } catch (_) {} }, 50);
-}
-function closeInfoInput() { infoSheet.classList.remove("show"); infoCtx = null; }
-
 function todayStr(d) {
   const dt = d ? new Date(d) : new Date();
   const y = dt.getFullYear();
@@ -1751,86 +1683,6 @@ function todayStr(d) {
   const day = String(dt.getDate()).padStart(2, "0");
   return y + "-" + m + "-" + day;
 }
-
-function saveInfo() {
-  const name = inName.value.trim();
-  if (!name) {
-    fName.classList.add("invalid");
-    try { inName.focus(); } catch (_) {}
-    return;
-  }
-  fName.classList.remove("invalid");
-
-  const original = infoCtx.original;
-  const mask = infoCtx.mask;
-  const cut = infoCtx.cutout || composeCutout(original, mask);
-
-  const originalURL = original.toDataURL("image/jpeg", JPEG_Q);
-  const maskURL = mask.toDataURL("image/png");
-
-  if (infoCtx.item) {
-    // 수정
-    const it = infoCtx.item;
-    it.name = name;
-    it.location = inPlace.value.trim();
-    it.note = inNote.value.trim();
-    it.date = inDate.value || todayStr();
-    it.image = cut.dataURL;
-    it.original = originalURL;
-    it.mask = maskURL;
-  } else {
-    // 신규
-    const it = {
-      id: nextId++,
-      image: cut.dataURL,
-      original: originalURL,
-      mask: maskURL,
-      name: name,
-      location: inPlace.value.trim(),
-      note: inNote.value.trim(),
-      date: inDate.value || todayStr(),
-      createdAt: Date.now()
-    };
-    store.push(it);
-  }
-
-  const ok = persist();
-  closeInfoInput();
-  if (ok) {
-    updateInvBadge(true);
-    bumpCounter(false);
-  }
-}
-
-/* 현재 위치 → 장소 채우기 (선택, 권한/미지원 graceful) */
-function fillGeo() {
-  if (!navigator.geolocation) {
-    toast("이 기기에서는 위치를 쓸 수 없어요. 직접 적어 주세요.");
-    return;
-  }
-  geoBtn.disabled = true;
-  geoBtn.textContent = "찾는 중…";
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const la = pos.coords.latitude.toFixed(5);
-      const lo = pos.coords.longitude.toFixed(5);
-      inPlace.value = "위도 " + la + ", 경도 " + lo;
-      geoBtn.disabled = false;
-      geoBtn.textContent = "현재 위치";
-    },
-    (err) => {
-      geoBtn.disabled = false;
-      geoBtn.textContent = "현재 위치";
-      if (err && err.code === 1) toast("위치 권한이 거부됐어요. 장소를 직접 적어 주세요.");
-      else toast("위치를 찾지 못했어요. 직접 적어 주세요.");
-    },
-    { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
-  );
-}
-
-infoCancelBtn.addEventListener("click", closeInfoInput);
-infoSaveBtn.addEventListener("click", saveInfo);
-geoBtn.addEventListener("click", fillGeo);
 
 /* =========================================================
    localStorage 저장/로드
@@ -1842,7 +1694,7 @@ function persist() {
     return true;
   } catch (e) {
     if (e && (e.name === "QuotaExceededError" || e.code === 22 || e.code === 1014)) {
-      toast("저장 공간이 가득 찼어요. ‘내보내기’로 백업한 뒤 일부를 정리해 주세요.", 5000);
+      toast("저장 공간이 가득 찼어요. ‘백업저장’으로 백업한 뒤 일부를 정리해 주세요.", 5000);
     } else {
       toast("저장 중 문제가 생겼어요.");
     }
@@ -1878,10 +1730,10 @@ function loadStore() {
 }
 
 /* =========================================================
-   내보내기 / 가져오기
+   백업 내보내기 / 불러오기 (JSON) — 갤러리 사진 가져오기와 별개
    ========================================================= */
 function exportJSON() {
-  if (store.length === 0) { toast("내보낼 채집물이 없어요."); return; }
+  if (store.length === 0) { toast("백업할 채집물이 없어요."); return; }
   const payload = JSON.stringify({ v: 2, exportedAt: Date.now(), items: store }, null, 0);
   const blob = new Blob([payload], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -1893,7 +1745,7 @@ function exportJSON() {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 2000);
-  toast("도감을 내보냈어요.");
+  toast("백업 파일을 내보냈어요.");
 }
 
 function importJSONFile(file) {
@@ -1910,7 +1762,7 @@ function importJSONFile(file) {
     for (const it of store) if (it.id > maxId) maxId = it.id;
     for (const it of obj.items) {
       if (!it || !it.image) continue;
-      store.push({
+      const newIt = {
         id: ++maxId,
         image: it.image,
         original: it.original || it.image,
@@ -1920,7 +1772,9 @@ function importJSONFile(file) {
         note: typeof it.note === "string" ? it.note : "",
         date: typeof it.date === "string" ? it.date : todayStr(it.createdAt),
         createdAt: typeof it.createdAt === "number" ? it.createdAt : Date.now()
-      });
+      };
+      store.push(newIt);
+      ensureNat(newIt);
       added++;
     }
     nextId = maxId + 1;
@@ -1941,6 +1795,31 @@ importFile.addEventListener("change", (e) => {
   if (f) importJSONFile(f);
   importFile.value = "";
 });
+
+/* 사진 가져오기 (갤러리) — JSON 백업 입력과 별개의 image/* 입력 사용 */
+function pickPhoto() { photoFile.click(); }
+photoBtn.addEventListener("click", pickPhoto);
+invPhotoBtn.addEventListener("click", pickPhoto);
+photoFile.addEventListener("change", (e) => {
+  const f = e.target.files && e.target.files[0];
+  if (f) importPhotoFile(f);
+  photoFile.value = "";
+});
+
+/* 비우기 (전체 삭제) */
+function clearAll() {
+  if (store.length === 0) { toast("이미 비어 있어요."); return; }
+  if (!confirm("도감을 전부 비울까요? 되돌릴 수 없어요.")) return;
+  store.length = 0;
+  _natCache.clear();
+  try { localStorage.removeItem(LS_KEY); } catch (_) {}
+  nextId = 1;
+  updateInvBadge(false);
+  invCountLabel.textContent = "0개";
+  if (Phys.open) refreshInventoryView();
+  toast("도감을 비웠어요.");
+}
+invClearBtn.addEventListener("click", clearAll);
 
 /* =========================================================
    채집 도감 오버레이 — Matter.js 중력 + 드래그(MouseConstraint) + 탭→상세
@@ -2209,7 +2088,7 @@ function teardownPhysics() {
 }
 
 /* =========================================================
-   상세 화면 — 보기/수정/재누끼/삭제
+   상세 화면 — 보기/정보 입력·수정/재누끼/삭제
    ========================================================= */
 let detailId = null;
 function findItem(id) { return store.find((x) => x.id === id) || null; }
@@ -2219,31 +2098,39 @@ function openDetail(id) {
   if (!it) return;
   detailId = id;
   detailImg.src = it.image;
-  dvName.textContent = it.name || "(이름 없음)";
-  dvPlace.textContent = it.location || "—";
-  dvNote.textContent = it.note || "—";
-  dvDate.textContent = it.date || "—";
+  detailTitle.textContent = it.name || "이름 없음";
+  inName.value = it.name || "";
+  inPlace.value = it.location || "";
+  inNote.value = it.note || "";
+  inDate.value = it.date || todayStr(it.createdAt);
   detailSheet.classList.add("show");
 }
 function closeDetail() { detailSheet.classList.remove("show"); detailId = null; }
 
-/* 상세에서 정보 수정 */
-async function detailEditInfo() {
+/* 상세 정보 저장(이름/장소/메모/날짜) */
+function saveDetail() {
   const it = findItem(detailId);
   if (!it) return;
-  // 원본/마스크 캔버스 복원
-  const oc = await dataURLToCanvas(it.original || it.image);
-  let mc;
-  if (it.mask) mc = await dataURLToMaskCanvas(it.mask, oc.width, oc.height);
-  else mc = fullMaskCanvas(oc.width, oc.height);
+  it.name = inName.value.trim();
+  it.location = inPlace.value.trim();
+  it.note = inNote.value.trim();
+  it.date = inDate.value || todayStr(it.createdAt);
+  persist();
+  updateInvBadge(false);
   closeDetail();
-  openInfoInput(oc, mc, it);
+  if (Phys.open) refreshInventoryView();
+  toast("저장했어요.");
 }
 
 /* 상세에서 누끼 다시 다듬기 */
 async function detailEditMask() {
   const it = findItem(detailId);
   if (!it) return;
+  // 입력 중인 정보(이름/장소/메모/날짜)도 먼저 저장해 둠
+  it.name = inName.value.trim();
+  it.location = inPlace.value.trim();
+  it.note = inNote.value.trim();
+  it.date = inDate.value || todayStr(it.createdAt);
   const oc = await dataURLToCanvas(it.original || it.image);
   let mc;
   if (it.mask) mc = await dataURLToMaskCanvas(it.mask, oc.width, oc.height);
@@ -2255,6 +2142,8 @@ async function detailEditMask() {
     it.image = cut.dataURL;
     it.original = finalOrig.toDataURL("image/jpeg", JPEG_Q);
     it.mask = finalMask.toDataURL("image/png");
+    _natCache.delete(it.id);
+    ensureNat(it);
     persist();
     updateInvBadge(false);
     if (Phys.open) refreshInventoryView();
@@ -2277,7 +2166,7 @@ function detailDelete() {
 }
 
 detailCloseBtn.addEventListener("click", closeDetail);
-detailEditInfoBtn.addEventListener("click", detailEditInfo);
+detailSaveBtn.addEventListener("click", saveDetail);
 detailEditMaskBtn.addEventListener("click", detailEditMask);
 detailDeleteBtn.addEventListener("click", detailDelete);
 
@@ -2318,7 +2207,6 @@ invCloseBtn.addEventListener("click", closeInventory);
 // 화면 탭으로도 채집 (편집/입력/상세 화면이 떠있지 않을 때만)
 stage.addEventListener("click", (e) => {
   if (editorEl.classList.contains("show") ||
-      infoSheet.classList.contains("show") ||
       detailSheet.classList.contains("show") ||
       inventoryEl.classList.contains("show")) return;
   if (e.target === video || e.target === stage) capture();
