@@ -913,7 +913,9 @@ const Phys = {
 };
 
 function physicsAvailable() {
-  return typeof window.Matter !== "undefined" && !prefersReducedMotion;
+  // reduce-motion이어도 "떨어뜨림"은 유지(앱 핵심) — buildPhysics에서 차분 모드로 처리.
+  // Matter 로드 실패(CDN 차단 등)일 때만 격자 폴백.
+  return typeof window.Matter !== "undefined";
 }
 
 function openInventory() {
@@ -977,8 +979,9 @@ function buildPhysics() {
 
   const dpr = window.devicePixelRatio || 1;
 
+  const calm = prefersReducedMotion; // 동작 줄이기: 떨어지되 차분하게(회전·튕김 X, 빨리 안착)
   const engine = Engine.create();
-  engine.gravity.y = 1;
+  engine.gravity.y = calm ? 1.5 : 1; // calm이면 중력 키워 빠르게 안착
   engine.gravity.x = 0;
 
   const render = Render.create({
@@ -1032,14 +1035,14 @@ function buildPhysics() {
     const y = -bh - Math.random() * 40;
 
     const body = Bodies.rectangle(x, y, bw, bh, {
-      restitution: 0.2,
+      restitution: calm ? 0 : 0.2,   // calm: 튕김 없음
       friction: 0.6,
-      frictionAir: 0.01,
+      frictionAir: calm ? 0.02 : 0.01,
       render: {
         sprite: { texture: it.dataURL, xScale: xScale, yScale: yScale }
       }
     });
-    Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.1);
+    if (!calm) Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.1); // calm: 회전 없음
     Composite.add(engine.world, body);
 
     if (i < drops.length) {
@@ -1050,7 +1053,8 @@ function buildPhysics() {
 
   // OPTIONAL: deviceorientation → 중력 방향 기울이기 (미지원/권한없음 시 조용히 스킵)
   try {
-    if (typeof window.DeviceOrientationEvent !== "undefined" &&
+    if (!prefersReducedMotion &&
+        typeof window.DeviceOrientationEvent !== "undefined" &&
         typeof window.DeviceOrientationEvent.requestPermission !== "function") {
       // iOS 권한 프롬프트가 필요한 경우는 자동 요청하지 않고 스킵(제스처 정책)
       const handler = (e) => {
