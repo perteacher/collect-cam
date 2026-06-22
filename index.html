@@ -565,6 +565,141 @@
     #invBadge.bump { animation: none; }
     #loader .spin { animation-duration: 1.6s; }
   }
+
+  /* ===== 음소거 버튼 ===== */
+  #muteBtn {
+    position: absolute;
+    top: calc(env(safe-area-inset-top, 0px) + 14px);
+    right: 14px;
+    z-index: 5;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: rgba(20,22,28,0.72);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #muteBtn:active { background: #262a35; }
+
+  /* ===== counter 통계 확장 ===== */
+  #counter { display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; }
+  #counter .sep { color: var(--line); }
+  #counter .stat-today, #counter .stat-streak { font-size: 12px; font-weight: 600; color: var(--muted); }
+  #counter .stat-streak b { color: #ff9f43; }
+
+  /* ===== 획득 팝 ===== */
+  #capturePop {
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+  }
+  #capturePop.fire { animation: capturePopAnim 900ms cubic-bezier(.18,1.4,.4,1) forwards; }
+  #capturePopInner {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 16px 28px;
+    border-radius: 20px;
+    background: rgba(14,15,19,0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 2px solid var(--capture-pop-color, var(--accent));
+    box-shadow: 0 0 24px var(--capture-pop-color, var(--accent));
+  }
+  #capturePopRarity { font-size: 13px; font-weight: 700; letter-spacing: 1px; color: var(--capture-pop-color, var(--accent)); }
+  #capturePopText { font-size: 28px; font-weight: 900; color: var(--text); letter-spacing: 2px; }
+  @keyframes capturePopAnim {
+    0%   { opacity:0; transform: scale(0.5); }
+    15%  { opacity:1; transform: scale(1.18); }
+    40%  { opacity:1; transform: scale(0.96); }
+    65%  { opacity:1; transform: scale(1.02); }
+    85%  { opacity:0.9; transform: scale(1); }
+    100% { opacity:0; transform: scale(1.04); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #capturePop.fire { animation: capturePopFade 600ms ease forwards; }
+    @keyframes capturePopFade { 0%{opacity:0} 20%{opacity:1} 80%{opacity:1} 100%{opacity:0} }
+  }
+
+  /* ===== 희귀도 ===== */
+  :root {
+    --rarity-common: #888888;
+    --rarity-rare: #60b0ff;
+    --rarity-epic: #d060ff;
+  }
+  .rarity-rare  { border-color: var(--rarity-rare)  !important; }
+  .rarity-epic  { border-color: var(--rarity-epic)  !important;
+                  animation: epicGlow 1.6s ease-in-out infinite; }
+  @keyframes epicGlow {
+    0%,100% { box-shadow: 0 0 6px 1px rgba(208,96,255,0.4); }
+    50%     { box-shadow: 0 0 18px 5px rgba(208,96,255,0.75); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rarity-epic { animation: none; box-shadow: 0 0 10px 3px rgba(208,96,255,0.55); }
+  }
+  .rarity-badge {
+    display: inline-block;
+    font-size: 10px; font-weight: 800; letter-spacing: 0.5px;
+    padding: 1px 6px; border-radius: 999px;
+    border: 1px solid;
+  }
+  .rarity-badge.common { color: var(--rarity-common); border-color: var(--rarity-common); }
+  .rarity-badge.rare   { color: var(--rarity-rare);   border-color: var(--rarity-rare); }
+  .rarity-badge.epic   { color: var(--rarity-epic);   border-color: var(--rarity-epic);
+                          text-shadow: 0 0 8px rgba(208,96,255,0.8); }
+
+  /* ===== 상세 No. 배지 ===== */
+  #detailNo {
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    letter-spacing: 0.5px; padding: 0 16px 0;
+    display: flex; gap: 8px; align-items: center;
+    margin-bottom: -6px; margin-top: 4px;
+  }
+
+  /* ===== 업적 배지 시트 ===== */
+  #badgeSheet { z-index: 65; }
+  .badgeList { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .badgeItem {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px; border-radius: 16px;
+    background: var(--panel-2); border: 1px solid var(--line);
+  }
+  .badgeItem.earned { border-color: var(--accent); }
+  .badgeItem .bi-icon { font-size: 28px; min-width: 36px; text-align: center; }
+  .badgeItem .bi-info { display: flex; flex-direction: column; gap: 2px; }
+  .badgeItem .bi-label { font-size: 15px; font-weight: 800; }
+  .badgeItem .bi-desc  { font-size: 12px; color: var(--muted); }
+  .badgeItem .bi-tag   { margin-left: auto; font-size: 11px; font-weight: 800; padding: 3px 8px;
+                          border-radius: 999px; }
+  .badgeItem.earned .bi-tag { background: var(--accent); color: #06210f; }
+  .badgeItem:not(.earned) .bi-icon { opacity: 0.35; filter: grayscale(1); }
+  .badgeItem:not(.earned) .bi-tag { background: var(--panel); color: var(--muted); border: 1px solid var(--line); }
+
+  /* ===== 배지 토스트 (green 아닌 별도) ===== */
+  #badgeToast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 140px);
+    transform: translateX(-50%) translateY(20px);
+    z-index: 96;
+    max-width: 88vw;
+    background: rgba(14,10,24,0.96);
+    border: 1px solid var(--rarity-epic);
+    color: #f0d0ff;
+    border-radius: 14px;
+    padding: 12px 18px;
+    font-size: 14px; font-weight: 700;
+    text-align: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 200ms ease, transform 200ms ease;
+    display: flex; align-items: center; gap: 10px;
+  }
+  #badgeToast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
@@ -578,7 +713,8 @@
       <span class="corner br"></span>
       <span class="hint">대상을 가운데 맞추고 채집</span>
     </div>
-    <div id="counter">채집 <b id="count">0</b></div>
+    <div id="counter">채집 <b id="count">0</b><span class="sep">·</span><span class="stat-today">오늘 <b id="countToday">0</b></span><span class="sep">·</span><span class="stat-streak">🔥<b id="countStreak">0</b>일</span></div>
+    <button id="muteBtn" title="소리 끄기/켜기">🔊</button>
     <div id="flash"></div>
   </div>
 
@@ -598,6 +734,8 @@
     <div id="invTitle">채집 도감 <small id="invCountLabel">0개</small></div>
     <div class="btns">
       <button id="invPhotoBtn" title="사진 가져오기">사진</button>
+      <button id="invShakeBtn" title="흔들기">흔들기</button>
+      <button id="invBadgeBtn" title="업적 배지">배지</button>
       <button id="invClearBtn" title="전체 삭제">비우기</button>
       <button id="invExportBtn" title="백업 내보내기">백업저장</button>
       <button id="invImportBtn" title="백업 불러오기">백업열기</button>
@@ -646,6 +784,7 @@
     <button id="detailCloseBtn" class="btn small ghost">닫기</button>
   </div>
   <div class="sheetBody">
+    <div id="detailNo"></div>
     <div class="form">
       <div class="preview"><img id="detailImg" alt="" /></div>
       <div class="field">
@@ -684,6 +823,22 @@
 
 <div id="loader"><span class="spin"></span><span id="loaderMsg">배경 지우는 중…</span></div>
 <div id="toast"></div>
+<div id="badgeToast"></div>
+<div id="capturePop"><div id="capturePopInner"><div id="capturePopRarity"></div><div id="capturePopText">획득!</div></div></div>
+
+<!-- 상세 화면 No./희귀도 표시 (detailSheet sheetBody 첫줄에 삽입) -->
+
+<!-- 업적 배지 시트 -->
+<div id="badgeSheet" class="sheet">
+  <div class="sheetHead">
+    <h2>업적 배지</h2>
+    <button id="badgeCloseBtn" class="btn small ghost">닫기</button>
+  </div>
+  <div class="sheetBody">
+    <div id="badgeList" class="badgeList"></div>
+  </div>
+</div>
+
 <input id="importFile" type="file" accept="application/json,.json" style="display:none" />
 <input id="photoFile" type="file" accept="image/*" style="display:none" />
 
@@ -715,8 +870,26 @@ const PHYS_MIN_DIM = 40;
 const DROP_STAGGER_MS = 130;
 const WALL_THICK = 80;
 
+// ---- 희귀도 테이블 (prob 합 = 100) ----
+const RARITY_TABLE = [
+  { id: "epic",   label: "✨전설", color: "#d060ff", prob: 5  },
+  { id: "rare",   label: "💎희귀", color: "#60b0ff", prob: 25 },
+  { id: "common", label: "일반",   color: "#888888", prob: 70 }
+];
+
+// ---- 업적 테이블 ----
+const ACHIEVEMENTS = [
+  { id: "first",      emoji: "🌿", label: "첫 채집",      desc: "첫 번째 채집물을 획득하세요",      check: (s) => s.length >= 1 },
+  { id: "ten",        emoji: "🔟", label: "10종 채집",    desc: "채집물을 10개 모으세요",            check: (s) => s.length >= 10 },
+  { id: "thirty",     emoji: "🏆", label: "30종 채집",    desc: "채집물을 30개 모으세요",            check: (s) => s.length >= 30 },
+  { id: "epic_first", emoji: "✨", label: "첫 전설",      desc: "전설 등급 채집물을 획득하세요",      check: (s) => s.some(it => it.rarity === "epic") },
+  { id: "day5",       emoji: "⚡", label: "하루 5채집",   desc: "하루에 채집물 5개를 모으세요",       check: (s) => { const t = todayStr(); return s.filter(it => it.date === t).length >= 5; } },
+  { id: "streak3",    emoji: "🔥", label: "3일 연속",     desc: "3일 연속 채집하세요",               check: () => computeStreak() >= 3 }
+];
+
 // ---- 저장 ----
 const LS_KEY = "collect-cam.v2";
+const LS_META_KEY = "collect-cam.meta";
 const JPEG_Q = 0.82;        // original 스냅샷 저장 압축률
 const MASK_KEY_PREFIX = "m"; // (사용 안함, 예약)
 
@@ -777,6 +950,19 @@ const detailEditMaskBtn= document.getElementById("detailEditMaskBtn");
 const detailDeleteBtn  = document.getElementById("detailDeleteBtn");
 const detailSaveBtn    = document.getElementById("detailSaveBtn");
 
+const muteBtn        = document.getElementById("muteBtn");
+const countTodayEl   = document.getElementById("countToday");
+const countStreakEl  = document.getElementById("countStreak");
+const invShakeBtn    = document.getElementById("invShakeBtn");
+const invBadgeBtn    = document.getElementById("invBadgeBtn");
+const capturePopEl   = document.getElementById("capturePop");
+const capturePopRarityEl = document.getElementById("capturePopRarity");
+const badgeSheetEl   = document.getElementById("badgeSheet");
+const badgeListEl    = document.getElementById("badgeList");
+const badgeCloseBtn  = document.getElementById("badgeCloseBtn");
+const badgeToastEl   = document.getElementById("badgeToast");
+const detailNoEl     = document.getElementById("detailNo");
+
 const prefersReducedMotion =
   window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -792,6 +978,172 @@ let busy = false;
 */
 const store = [];
 let nextId = 1;
+
+// ---- 전역 메타 ----
+let meta = { nextSerialNo: 1, earnedBadges: [], captureDates: [] };
+
+// ---- 메타 저장/로드 ----
+function loadMeta() {
+  try {
+    const raw = localStorage.getItem(LS_META_KEY);
+    if (!raw) return;
+    const obj = JSON.parse(raw);
+    if (typeof obj.nextSerialNo === "number") meta.nextSerialNo = obj.nextSerialNo;
+    if (Array.isArray(obj.earnedBadges)) meta.earnedBadges = obj.earnedBadges;
+    if (Array.isArray(obj.captureDates)) meta.captureDates = obj.captureDates;
+  } catch (_) {}
+}
+function saveMeta() {
+  try { localStorage.setItem(LS_META_KEY, JSON.stringify(meta)); } catch (_) {}
+}
+
+// ---- WebAudio 효과음 ----
+let audioCtx = null;
+let muteSound = false;
+function getAudioCtx() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) {}
+  }
+  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+  return audioCtx;
+}
+function playTone(freq, type, gain, startT, dur, ctx) {
+  const osc = ctx.createOscillator();
+  const g   = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, startT);
+  g.gain.setValueAtTime(0, startT);
+  g.gain.linearRampToValueAtTime(gain, startT + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.001, startT + dur);
+  osc.connect(g); g.connect(ctx.destination);
+  osc.start(startT); osc.stop(startT + dur + 0.01);
+}
+function playCaptureSFX(rarity) {
+  if (muteSound) return;
+  const ctx = getAudioCtx(); if (!ctx) return;
+  const t = ctx.currentTime;
+  if (rarity === "epic") {
+    playTone(523, "sine",   0.18, t,        0.35, ctx);
+    playTone(659, "sine",   0.14, t + 0.08, 0.35, ctx);
+    playTone(784, "sine",   0.12, t + 0.16, 0.40, ctx);
+    playTone(1047,"triangle",0.08,t + 0.24, 0.45, ctx);
+  } else if (rarity === "rare") {
+    playTone(440, "sine",   0.16, t,        0.28, ctx);
+    playTone(660, "sine",   0.13, t + 0.06, 0.35, ctx);
+  } else {
+    playTone(880, "sine",   0.15, t,        0.18, ctx);
+    playTone(1100,"triangle",0.06,t + 0.04, 0.22, ctx);
+  }
+}
+function playShakeSFX() {
+  if (muteSound) return;
+  const ctx = getAudioCtx(); if (!ctx) return;
+  const t = ctx.currentTime;
+  playTone(200, "sawtooth", 0.10, t,        0.12, ctx);
+  playTone(160, "sawtooth", 0.08, t + 0.05, 0.14, ctx);
+}
+
+// ---- 진동 ----
+function vibrate(pattern) {
+  try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (_) {}
+}
+
+// ---- 음소거 토글 ----
+function toggleMute() {
+  muteSound = !muteSound;
+  muteBtn.textContent = muteSound ? "🔇" : "🔊";
+}
+muteBtn.addEventListener("click", toggleMute);
+
+// ---- 획득 팝 연출 ----
+let popTimer = null;
+function showCapturePop(rarity) {
+  if (prefersReducedMotion && rarity === "common") return;
+  const r = RARITY_TABLE.find(x => x.id === rarity) || RARITY_TABLE[2];
+  capturePopEl.style.setProperty("--capture-pop-color", r.color);
+  capturePopRarityEl.textContent = r.label;
+  capturePopEl.classList.remove("fire");
+  void capturePopEl.offsetWidth;
+  capturePopEl.classList.add("fire");
+  if (popTimer) clearTimeout(popTimer);
+  popTimer = setTimeout(() => capturePopEl.classList.remove("fire"), 1000);
+}
+
+// ---- 희귀도 굴림 ----
+function rollRarity() {
+  const r = Math.random() * 100;
+  let acc = 0;
+  for (const entry of RARITY_TABLE) {
+    acc += entry.prob;
+    if (r < acc) return entry.id;
+  }
+  return "common";
+}
+
+// ---- 스트릭 계산 ----
+function computeStreak() {
+  const dates = [...new Set(meta.captureDates)].sort().reverse();
+  if (!dates.length) return 0;
+  let streak = 0;
+  let cur = todayStr();
+  for (const d of dates) {
+    const diff = Math.round((new Date(cur) - new Date(d)) / 86400000);
+    if (diff === 0 || diff === 1) { streak++; cur = d; }
+    else break;
+  }
+  return streak;
+}
+
+// ---- 통계 업데이트 ----
+function updateStats() {
+  countEl.textContent = String(store.length);
+  const today = todayStr();
+  countTodayEl.textContent = String(store.filter(it => it.date === today).length);
+  countStreakEl.textContent = String(computeStreak());
+}
+
+// ---- 업적 체크 ----
+let badgeToastTimer = null;
+function showBadgeToast(ach) {
+  badgeToastEl.textContent = "";
+  const span = document.createElement("span");
+  span.textContent = ach.emoji + " 업적 달성! " + ach.label;
+  badgeToastEl.appendChild(span);
+  badgeToastEl.classList.add("show");
+  if (badgeToastTimer) clearTimeout(badgeToastTimer);
+  badgeToastTimer = setTimeout(() => badgeToastEl.classList.remove("show"), 3500);
+}
+function checkAchievements() {
+  for (const ach of ACHIEVEMENTS) {
+    if (meta.earnedBadges.includes(ach.id)) continue;
+    let ok = false;
+    try { ok = ach.check(store); } catch (_) {}
+    if (ok) {
+      meta.earnedBadges.push(ach.id);
+      saveMeta();
+      showBadgeToast(ach);
+    }
+  }
+}
+
+// ---- 배지 시트 ----
+function openBadgeSheet() {
+  badgeListEl.innerHTML = "";
+  for (const ach of ACHIEVEMENTS) {
+    const earned = meta.earnedBadges.includes(ach.id);
+    const div = document.createElement("div");
+    div.className = "badgeItem" + (earned ? " earned" : "");
+    div.innerHTML =
+      `<div class="bi-icon">${ach.emoji}</div>` +
+      `<div class="bi-info"><div class="bi-label">${ach.label}</div><div class="bi-desc">${ach.desc}</div></div>` +
+      `<div class="bi-tag">${earned ? "달성" : "미달성"}</div>`;
+    badgeListEl.appendChild(div);
+  }
+  badgeSheetEl.classList.add("show");
+}
+function closeBadgeSheet() { badgeSheetEl.classList.remove("show"); }
+badgeCloseBtn.addEventListener("click", closeBadgeSheet);
+invBadgeBtn.addEventListener("click", openBadgeSheet);
 
 // ---- 토스트/로더 ----
 let toastTimer = null;
@@ -1219,6 +1571,8 @@ function buildMaskCanvas(maskInfo, w, h) {
 /* 누끼 편집 완료 → 정보 없이 바로 도감에 저장. (이름/장소/메모는 상세에서 입력) */
 function saveNewItem(originalCanvas, maskCanvas) {
   const cut = composeCutout(originalCanvas, maskCanvas);
+  const rarity = rollRarity();
+  const serialNo = meta.nextSerialNo++;
   const it = {
     id: nextId++,
     image: cut.dataURL,
@@ -1228,16 +1582,29 @@ function saveNewItem(originalCanvas, maskCanvas) {
     location: "",
     note: "",
     date: todayStr(),
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    serialNo: serialNo,
+    rarity: rarity
   };
   store.push(it);
   ensureNat(it);
+
+  const today = todayStr();
+  if (!meta.captureDates.includes(today)) meta.captureDates.push(today);
+
   const ok = persist();
+  saveMeta();
   if (ok) {
     updateInvBadge(true);
     bumpCounter(false);
-    toast("도감에 담았어요");
+    updateStats();
+    showCapturePop(rarity);
+    playCaptureSFX(rarity);
+    vibrate(rarity === "epic" ? [30,20,30,20,60] : rarity === "rare" ? [30,20,50] : [40]);
+    const rarityEntry = RARITY_TABLE.find(x => x.id === rarity);
+    toast("도감에 담았어요" + (rarity !== "common" ? " · " + (rarityEntry ? rarityEntry.label : "") : ""));
   }
+  checkAchievements();
   if (Phys.open) refreshInventoryView();
 }
 
@@ -1721,7 +2088,9 @@ function loadStore() {
       location: typeof it.location === "string" ? it.location : "",
       note: typeof it.note === "string" ? it.note : "",
       date: typeof it.date === "string" ? it.date : todayStr(it.createdAt),
-      createdAt: typeof it.createdAt === "number" ? it.createdAt : Date.now()
+      createdAt: typeof it.createdAt === "number" ? it.createdAt : Date.now(),
+      serialNo: typeof it.serialNo === "number" ? it.serialNo : meta.nextSerialNo++,
+      rarity: (it.rarity === "epic" || it.rarity === "rare" || it.rarity === "common") ? it.rarity : "common"
     });
   }
   let maxId = 0;
@@ -1771,7 +2140,9 @@ function importJSONFile(file) {
         location: typeof it.location === "string" ? it.location : "",
         note: typeof it.note === "string" ? it.note : "",
         date: typeof it.date === "string" ? it.date : todayStr(it.createdAt),
-        createdAt: typeof it.createdAt === "number" ? it.createdAt : Date.now()
+        createdAt: typeof it.createdAt === "number" ? it.createdAt : Date.now(),
+        serialNo: typeof it.serialNo === "number" ? it.serialNo : meta.nextSerialNo++,
+        rarity: (it.rarity === "epic" || it.rarity === "rare" || it.rarity === "common") ? it.rarity : "common"
       };
       store.push(newIt);
       ensureNat(newIt);
@@ -1814,7 +2185,10 @@ function clearAll() {
   _natCache.clear();
   try { localStorage.removeItem(LS_KEY); } catch (_) {}
   nextId = 1;
+  meta.captureDates = [];
+  saveMeta();
   updateInvBadge(false);
+  updateStats();
   invCountLabel.textContent = "0개";
   if (Phys.open) refreshInventoryView();
   toast("도감을 비웠어요.");
@@ -1890,7 +2264,7 @@ function buildGrid() {
   invGrid.innerHTML = "";
   for (const it of store) {
     const cell = document.createElement("div");
-    cell.className = "gridItem";
+    cell.className = "gridItem rarity-" + (it.rarity || "common");
     const img = document.createElement("img");
     img.src = it.image;
     const nm = document.createElement("div");
@@ -1944,6 +2318,30 @@ function buildPhysics() {
   Phys.render = render;
   Phys.bodyById = new Map();
   Render.run(render);
+
+  // epic 반짝임 오버레이
+  Events.on(render, "afterRender", () => {
+    if (!Phys.open) return;
+    const ctx = render.context;
+    const now = Date.now();
+    Phys.bodyById.forEach((body, itemId) => {
+      const it = findItem(itemId);
+      if (!it || it.rarity !== "epic") return;
+      const bx = body.bounds.min.x, by = body.bounds.min.y;
+      const bw = body.bounds.max.x - bx, bh = body.bounds.max.y - by;
+      const phase = (now / 900) % (Math.PI * 2);
+      const glow = 0.45 + 0.45 * Math.sin(phase);
+      ctx.save();
+      ctx.globalAlpha = glow;
+      ctx.strokeStyle = "#d060ff";
+      ctx.lineWidth = 3;
+      ctx.shadowBlur = 16;
+      ctx.shadowColor = "#d060ff";
+      ctx.strokeRect(bx, by, bw, bh);
+      ctx.restore();
+    });
+  });
+
   const runner = Runner.create();
   Runner.run(runner, engine);
   Phys.runner = runner;
@@ -1981,6 +2379,15 @@ function buildPhysics() {
     const body = Phys.downBody;
     if (body && body.plugin && body.plugin.itemId != null && Phys.moved < 8 && dt < 400) {
       openDetail(body.plugin.itemId);
+    } else if (body && Phys.moved >= 20) {
+      // 빠른 드래그 = 던지기: velocity 증폭
+      const vel = body.velocity;
+      const speed = Math.hypot(vel.x, vel.y);
+      if (speed > 1.5) {
+        const factor = Math.min(3.5, 1.5 + speed * 0.18);
+        Body.setVelocity(body, { x: vel.x * factor, y: vel.y * factor });
+        Body.setAngularVelocity(body, body.angularVelocity * 1.8);
+      }
     }
     Phys.downPos = null;
     Phys.downBody = null;
@@ -2088,6 +2495,70 @@ function teardownPhysics() {
 }
 
 /* =========================================================
+   흔들기 — devicemotion / 대체 버튼
+   ========================================================= */
+const SHAKE_THRESHOLD = 20;
+const SHAKE_COOLDOWN  = 1100;
+let lastShakeTime = 0;
+let shakeListening = false;
+
+function doShake() {
+  if (!Phys.open || !Phys.engine) return;
+  const M = window.Matter;
+  if (!M) return;
+  Phys.bodyById.forEach((body) => {
+    M.Body.setVelocity(body, {
+      x: (Math.random() - 0.5) * 14,
+      y: -8 - Math.random() * 10
+    });
+    M.Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.5);
+  });
+  playShakeSFX();
+  vibrate([40, 30, 40]);
+}
+
+function handleDeviceMotion(e) {
+  const now = Date.now();
+  if (now - lastShakeTime < SHAKE_COOLDOWN) return;
+  const acc = e.accelerationIncludingGravity;
+  if (!acc) return;
+  const mag = Math.sqrt((acc.x || 0) ** 2 + (acc.y || 0) ** 2 + (acc.z || 0) ** 2);
+  if (mag > SHAKE_THRESHOLD) {
+    lastShakeTime = now;
+    doShake();
+  }
+}
+
+function startListeningMotion() {
+  if (shakeListening) return;
+  shakeListening = true;
+  window.addEventListener("devicemotion", handleDeviceMotion);
+  invShakeBtn.textContent = "흔들기✓";
+}
+
+function setupDeviceMotion() {
+  if (!window.DeviceMotionEvent) {
+    invShakeBtn.addEventListener("click", doShake);
+    return;
+  }
+  if (typeof DeviceMotionEvent.requestPermission === "function") {
+    // iOS — 버튼 탭 시 권한 요청
+    invShakeBtn.addEventListener("click", async () => {
+      try {
+        const res = await DeviceMotionEvent.requestPermission();
+        if (res === "granted") startListeningMotion();
+        else doShake(); // 권한 거부면 버튼 자체가 흔들기 대체
+      } catch (_) { doShake(); }
+    });
+  } else {
+    // Android / 데스크탑 — 바로 리슨 시작
+    startListeningMotion();
+    // 버튼 클릭 = 수동 흔들기
+    invShakeBtn.addEventListener("click", doShake);
+  }
+}
+
+/* =========================================================
    상세 화면 — 보기/정보 입력·수정/재누끼/삭제
    ========================================================= */
 let detailId = null;
@@ -2103,6 +2574,11 @@ function openDetail(id) {
   inPlace.value = it.location || "";
   inNote.value = it.note || "";
   inDate.value = it.date || todayStr(it.createdAt);
+  const sno = it.serialNo ? "No." + String(it.serialNo).padStart(3, "0") : "";
+  const re = RARITY_TABLE.find(x => x.id === (it.rarity || "common")) || RARITY_TABLE[2];
+  detailNoEl.innerHTML = sno
+    ? `<span>${sno}</span><span class="rarity-badge ${it.rarity || "common"}">${re.label}</span>`
+    : "";
   detailSheet.classList.add("show");
 }
 function closeDetail() { detailSheet.classList.remove("show"); detailId = null; }
@@ -2229,11 +2705,14 @@ window.addEventListener("resize", () => {
 /* =========================================================
    시작
    ========================================================= */
+loadMeta();
 loadStore();
 // 저장된 컷아웃 자연 크기 미리 로드(물리용)
 for (const it of store) ensureNat(it);
 updateInvBadge(false);
+updateStats();
 editUndoBtn.disabled = true;
+setupDeviceMotion();
 startCamera();
 </script>
 </body>
